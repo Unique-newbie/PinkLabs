@@ -130,9 +130,22 @@ CREATE TABLE IF NOT EXISTS public.team_members (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT DEFAULT '',
   role TEXT DEFAULT '',
+  bio TEXT DEFAULT '',
   image_url TEXT DEFAULT '',
+  avatar_url TEXT DEFAULT '',
   sort_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ========================
+-- 9b. ABOUT SECTION
+-- ========================
+CREATE TABLE IF NOT EXISTS public.about (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT DEFAULT 'A Team Passionate About Digital Craft',
+  description TEXT DEFAULT '',
+  stats JSONB DEFAULT '[{"value":"50+","label":"Projects"},{"value":"30+","label":"Clients"},{"value":"3+","label":"Years"}]',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -249,6 +262,7 @@ ALTER TABLE public.process_steps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.about ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pricing_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.faq_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
@@ -267,6 +281,7 @@ CREATE POLICY "anon_read" ON public.process_steps FOR SELECT TO anon USING (is_a
 CREATE POLICY "anon_read" ON public.projects FOR SELECT TO anon USING (is_active = true);
 CREATE POLICY "anon_read" ON public.testimonials FOR SELECT TO anon USING (is_active = true);
 CREATE POLICY "anon_read" ON public.team_members FOR SELECT TO anon USING (is_active = true);
+CREATE POLICY "anon_read" ON public.about FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_read" ON public.pricing_plans FOR SELECT TO anon USING (is_active = true);
 CREATE POLICY "anon_read" ON public.faq_items FOR SELECT TO anon USING (is_active = true);
 CREATE POLICY "anon_read" ON public.social_links FOR SELECT TO anon USING (is_active = true);
@@ -287,6 +302,7 @@ CREATE POLICY "auth_all" ON public.process_steps FOR ALL TO authenticated USING 
 CREATE POLICY "auth_all" ON public.projects FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all" ON public.testimonials FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all" ON public.team_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON public.about FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all" ON public.pricing_plans FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all" ON public.faq_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "auth_all" ON public.social_links FOR ALL TO authenticated USING (true) WITH CHECK (true);
@@ -314,7 +330,7 @@ BEGIN
   FOR tbl IN 
     SELECT unnest(ARRAY[
       'site_settings','hero_content','stats','trust_logos','services',
-      'process_steps','projects','testimonials','team_members',
+      'process_steps','projects','testimonials','team_members','about',
       'pricing_plans','faq_items','social_links','contact_submissions',
       'section_headers','nav_links','footer_columns'
     ])

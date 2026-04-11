@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="PinkLabs — Premium web development agency crafting stunning digital experiences">
   <meta name="theme-color" content="#E91E63">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="PinkLabs — Web Development Agency" id="ogTitle">
   <meta property="og:description" content="We build stunning, high-performance websites and apps" id="ogDesc">
-  <meta property="og:image" content="" id="ogImage">
+  <meta property="og:image" content="/og-image.png" id="ogImage">
   <meta name="twitter:card" content="summary_large_image">
   <title>PinkLabs — Web Development Agency</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -168,6 +170,27 @@
       </div>
     </section>
 
+    <!-- ABOUT -->
+    <section class="section about" id="about" style="display:none;">
+      <div class="container">
+        <div class="about-grid">
+          <div class="about-content">
+            <span class="section-tag">Who We Are</span>
+            <h2 id="aboutTitle">A Team Passionate About <span class="pink">Digital Craft</span></h2>
+            <p id="aboutDesc">We're a small but mighty team of designers, developers, and strategists committed to building exceptional digital products. Every project is a chance to push boundaries.</p>
+            <div class="about-stats" id="aboutStats">
+              <div class="about-stat"><span class="about-stat-number">50+</span><span class="about-stat-label">Projects</span></div>
+              <div class="about-stat"><span class="about-stat-number">30+</span><span class="about-stat-label">Clients</span></div>
+              <div class="about-stat"><span class="about-stat-number">3+</span><span class="about-stat-label">Years</span></div>
+            </div>
+          </div>
+          <div class="team-grid" id="teamGrid">
+            <!-- Populated from Supabase or shows empty -->
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- FOOTER (Global) -->
@@ -247,7 +270,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>

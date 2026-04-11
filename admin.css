@@ -376,6 +376,25 @@ body {
 .empty-state { text-align: center; padding: 60px 20px; color: var(--admin-text-muted); }
 .empty-state p { margin-bottom: 16px; font-size: 1rem; }
 
+/* ===================== IMAGE UPLOAD ===================== */
+.image-upload-group {
+  display: flex; gap: 8px; align-items: stretch;
+}
+.image-upload-group input[type="text"] { flex: 1; }
+.upload-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--admin-surface-3);
+  border: 1px solid var(--admin-border); border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted); font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.upload-btn:hover { border-color: var(--admin-pink); color: var(--admin-pink); }
+.image-preview {
+  margin-top: 10px; max-width: 200px; max-height: 120px;
+  border-radius: var(--admin-radius-sm); border: 1px solid var(--admin-border);
+  object-fit: cover;
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }

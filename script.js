@@ -3,19 +3,22 @@
 // Dark mode, expandable project cards, animated counters
 // =============================================================
 
-const SUPABASE_URL = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_URL : 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_ANON_KEY : 'YOUR_SUPABASE_ANON_KEY';
-
 let sb = null;
+
+function initSupabase() {
+  const url = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_URL : 'YOUR_SUPABASE_URL';
+  const key = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_ANON_KEY : 'YOUR_SUPABASE_ANON_KEY';
+  if (typeof supabase !== 'undefined' && url !== 'YOUR_SUPABASE_URL') {
+    sb = supabase.createClient(url, key);
+    return true;
+  }
+  return false;
+}
 
 // =============================================================
 // Init
 // =============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-  if (typeof supabase !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-
   initPreloader();
   initTheme();
   initNavbar();
@@ -23,6 +26,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSmoothScroll();
   initBackToTop();
   initCookieConsent();
+
+  // Try immediate init (scripts may already be loaded)
+  if (!initSupabase()) {
+    // Deferred scripts haven't loaded yet, wait for them
+    await new Promise(resolve => {
+      const check = setInterval(() => {
+        if (typeof supabase !== 'undefined') { clearInterval(check); resolve(); }
+      }, 50);
+      // Give up after 5s
+      setTimeout(() => { clearInterval(check); resolve(); }, 5000);
+    });
+    initSupabase();
+  }
 
   // Load from Supabase if configured
   if (sb) {
@@ -509,6 +525,8 @@ async function loadAllContent() {
       loadTestimonials(),
       loadPricing(),
       loadFAQ(),
+      loadAbout(),
+      loadTeam(),
       loadFooter(),
     ]);
   } catch (err) {
@@ -722,6 +740,46 @@ async function loadFooter() {
     if (!data) return;
     if (data.footer_description) setTextIfExists('footerDesc', data.footer_description);
     if (data.copyright_text) setTextIfExists('footerCopyright', data.copyright_text);
+  } catch {}
+}
+
+async function loadAbout() {
+  try {
+    const { data } = await sb.from('about').select('*').limit(1).single();
+    if (!data) return;
+    if (data.title) setTextIfExists('aboutTitle', data.title);
+    if (data.description) setTextIfExists('aboutDesc', data.description);
+    if (data.stats) {
+      const container = document.getElementById('aboutStats');
+      if (container && Array.isArray(data.stats)) {
+        container.innerHTML = data.stats.map(s =>
+          `<div class="about-stat"><span class="about-stat-number">${s.value}</span><span class="about-stat-label">${s.label}</span></div>`
+        ).join('');
+      }
+    }
+    showSection('about');
+  } catch {}
+}
+
+async function loadTeam() {
+  try {
+    const { data } = await sb.from('team_members').select('*').order('sort_order');
+    if (!data || !data.length) return;
+    const grid = document.getElementById('teamGrid');
+    if (!grid) return;
+    grid.innerHTML = data.map(m => {
+      const avatar = m.avatar_url
+        ? `<img src="${m.avatar_url}" alt="${m.name}" loading="lazy">`
+        : `<span class="team-avatar-placeholder">${(m.name || '?').charAt(0).toUpperCase()}</span>`;
+      return `
+        <div class="team-card">
+          <div class="team-avatar">${avatar}</div>
+          <h4>${m.name}</h4>
+          <p class="team-role">${m.role || ''}</p>
+          ${m.bio ? `<p class="team-bio">${m.bio}</p>` : ''}
+        </div>`;
+    }).join('');
+    showSection('about');
   } catch {}
 }
 

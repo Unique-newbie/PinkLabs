@@ -9,6 +9,6 @@
 // =============================================================
 
 const PINKLABS_CONFIG = {
-  SUPABASE_URL: 'YOUR_SUPABASE_URL',
-  SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY',
+  SUPABASE_URL: 'https://phadgprgjyndtddytaim.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoYWRncHJnanluZHRkZHl0YWltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjAyMDUsImV4cCI6MjA5MTQ5NjIwNX0.igaZp6GxjaCjzxATYRgahuNJBg5JKW8joPzwevWa_IY',
 };

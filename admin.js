@@ -113,8 +113,8 @@ async function loadSection(section) {
   const titleMap = {
     dashboard: 'Dashboard', hero: 'Hero Section', services: 'Services', process: 'Process Steps',
     portfolio: 'Portfolio Projects', testimonials: 'Testimonials', team: 'Team Members',
-    pricing: 'Pricing Plans', faq: 'FAQ', 'contact-info': 'Contact & Social', submissions: 'Submissions',
-    settings: 'Site Settings', navbar: 'Navigation'
+    about: 'About Section', pricing: 'Pricing Plans', faq: 'FAQ', 'contact-info': 'Contact & Social',
+    submissions: 'Submissions', settings: 'Site Settings', navbar: 'Navigation'
   };
   document.getElementById('topbarTitle').textContent = titleMap[section] || section;
 
@@ -128,7 +128,8 @@ async function loadSection(section) {
       case 'process': await renderCrudList(area, 'process_steps', ['step_number', 'title', 'description', 'icon_svg']); break;
       case 'portfolio': await renderCrudList(area, 'projects', ['title', 'description', 'tag', 'image_url', 'project_url', 'is_featured']); break;
       case 'testimonials': await renderCrudList(area, 'testimonials', ['client_name', 'client_role', 'client_company', 'client_initials', 'quote', 'rating']); break;
-      case 'team': await renderCrudList(area, 'team_members', ['name', 'role', 'image_url']); break;
+      case 'team': await renderCrudList(area, 'team_members', ['name', 'role', 'bio', 'avatar_url']); break;
+      case 'about': await renderAboutEditor(area); break;
       case 'pricing': await renderPricingEditor(area); break;
       case 'faq': await renderCrudList(area, 'faq_items', ['question', 'answer']); break;
       case 'contact-info': await renderContactInfoEditor(area); break;
@@ -386,6 +387,8 @@ async function openCrudModal(table, fields, itemId) {
 
   const fieldsArr = typeof fields === 'string' ? JSON.parse(fields.replace(/'/g, '"')) : fields;
 
+  const isImageField = (f) => f.endsWith('_url') && (f.includes('image') || f.includes('avatar'));
+
   const formHtml = fieldsArr.map(f => {
     const label = f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const val = item[f] ?? '';
@@ -396,8 +399,23 @@ async function openCrudModal(table, fields, itemId) {
     if (f === 'rating') {
       return `<div class="field"><label>${label}</label><input type="number" id="modal_${f}" value="${val}" min="1" max="5"></div>`;
     }
-    if (f === 'description' || f === 'quote' || f === 'answer' || f === 'icon_svg') {
+    if (f === 'description' || f === 'quote' || f === 'answer' || f === 'icon_svg' || f === 'bio') {
       return `<div class="field"><label>${label}</label><textarea id="modal_${f}">${esc(val)}</textarea></div>`;
+    }
+    if (isImageField(f)) {
+      return `
+        <div class="field">
+          <label>${label}</label>
+          <div class="image-upload-group">
+            <input type="text" id="modal_${f}" value="${esc(val)}" placeholder="Paste URL or upload image">
+            <label class="upload-btn" for="upload_${f}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload
+            </label>
+            <input type="file" id="upload_${f}" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'modal_${f}')">
+          </div>
+          ${val ? `<img src="${esc(val)}" class="image-preview" alt="preview">` : ''}
+        </div>`;
     }
     return `<div class="field"><label>${label}</label><input type="text" id="modal_${f}" value="${esc(val)}"></div>`;
   }).join('');
@@ -428,6 +446,141 @@ async function openCrudModal(table, fields, itemId) {
     closeModal();
     loadSection(currentSection);
   });
+}
+
+// =============================================================
+// Image Upload to Supabase Storage
+// =============================================================
+async function handleImageUpload(event, targetInputId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file', 'error');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image must be under 5MB', 'error');
+    return;
+  }
+
+  const ext = file.name.split('.').pop();
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+  const filePath = `uploads/${fileName}`;
+
+  // Show uploading state
+  const uploadBtn = event.target.previousElementSibling;
+  const originalText = uploadBtn.innerHTML;
+  uploadBtn.innerHTML = 'Uploading...';
+
+  try {
+    const { error: uploadError } = await sb.storage.from('media').upload(filePath, file, {
+      cacheControl: '31536000',
+      upsert: false,
+    });
+
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = sb.storage.from('media').getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+
+    document.getElementById(targetInputId).value = publicUrl;
+
+    // Update preview if exists
+    const previewImg = document.getElementById(targetInputId)?.closest('.field')?.querySelector('.image-preview');
+    if (previewImg) {
+      previewImg.src = publicUrl;
+    } else {
+      const field = document.getElementById(targetInputId)?.closest('.field');
+      if (field) {
+        const img = document.createElement('img');
+        img.src = publicUrl;
+        img.className = 'image-preview';
+        img.alt = 'preview';
+        field.appendChild(img);
+      }
+    }
+
+    showToast('Image uploaded!', 'success');
+  } catch (err) {
+    showToast('Upload failed: ' + err.message, 'error');
+  } finally {
+    uploadBtn.innerHTML = originalText;
+  }
+}
+
+// =============================================================
+// About Section Editor
+// =============================================================
+async function renderAboutEditor(area) {
+  const { data } = await sb.from('about').select('*').limit(1).single();
+  const about = data || {};
+  const stats = about.stats || [
+    { value: '50+', label: 'Projects' },
+    { value: '30+', label: 'Clients' },
+    { value: '3+', label: 'Years' }
+  ];
+
+  area.innerHTML = `
+    <div class="section-panel">
+      <div class="section-panel-header"><h3>About Section Content</h3></div>
+      <div class="section-panel-body">
+        <div class="field"><label>Title</label><input type="text" id="aboutTitle" value="${esc(about.title)}"></div>
+        <div class="field"><label>Description</label><textarea id="aboutDesc" rows="4">${esc(about.description)}</textarea></div>
+        <div class="section-panel-header" style="margin-top:20px;padding:0;border:0"><h3>Stats</h3></div>
+        <div id="aboutStatsContainer">
+          ${stats.map((s, i) => `
+            <div class="field-row" data-stat-idx="${i}">
+              <div class="field"><label>Value</label><input type="text" class="stat-val" value="${esc(s.value)}"></div>
+              <div class="field"><label>Label</label><input type="text" class="stat-label" value="${esc(s.label)}"></div>
+              <button class="btn btn-danger btn-sm" onclick="this.closest('.field-row').remove()" style="align-self:end;margin-bottom:4px">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addAboutStat()" style="margin-top:8px">+ Add Stat</button>
+        <div class="btn-group" style="margin-top:20px">
+          <button class="btn btn-pink" onclick="saveAbout('${about.id || ''}')">Save About Section</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addAboutStat() {
+  const container = document.getElementById('aboutStatsContainer');
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  row.innerHTML = `
+    <div class="field"><label>Value</label><input type="text" class="stat-val" value=""></div>
+    <div class="field"><label>Label</label><input type="text" class="stat-label" value=""></div>
+    <button class="btn btn-danger btn-sm" onclick="this.closest('.field-row').remove()" style="align-self:end;margin-bottom:4px">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+async function saveAbout(existingId) {
+  const statRows = document.querySelectorAll('#aboutStatsContainer .field-row');
+  const stats = [];
+  statRows.forEach(row => {
+    const val = row.querySelector('.stat-val').value.trim();
+    const label = row.querySelector('.stat-label').value.trim();
+    if (val || label) stats.push({ value: val, label });
+  });
+
+  const payload = {
+    title: document.getElementById('aboutTitle').value,
+    description: document.getElementById('aboutDesc').value,
+    stats,
+  };
+
+  let error;
+  if (existingId) {
+    ({ error } = await sb.from('about').update(payload).eq('id', existingId));
+  } else {
+    ({ error } = await sb.from('about').insert([payload]));
+  }
+  if (error) { showToast(error.message, 'error'); return; }
+  showToast('About section saved!', 'success');
+  loadSection('about');
 }
 
 // =============================================================
