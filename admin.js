@@ -48,12 +48,12 @@ function bindLoginForm() {
     const btn = document.getElementById('loginBtn');
     btn.disabled = true;
     btn.querySelector('.login-btn-text').style.display = 'none';
-    btn.querySelector('.login-btn-loading').style.display = 'inline';
+    btn.querySelector('.login-btn-loading').style.display = 'flex';
     showLoginError('');
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     btn.disabled = false;
-    btn.querySelector('.login-btn-text').style.display = 'inline';
+    btn.querySelector('.login-btn-text').style.display = 'flex';
     btn.querySelector('.login-btn-loading').style.display = 'none';
 
     if (error) { showLoginError(error.message); return; }
@@ -70,6 +70,13 @@ function showDashboard() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminDashboard').style.display = 'flex';
   document.getElementById('userEmail').textContent = currentUser.email;
+  // Populate sidebar user info
+  const emailSidebar = document.getElementById('userEmailSidebar');
+  const nameSidebar = document.getElementById('userNameSidebar');
+  const avatarSidebar = document.getElementById('userAvatarSidebar');
+  if (emailSidebar) emailSidebar.textContent = currentUser.email;
+  if (nameSidebar) nameSidebar.textContent = currentUser.email.split('@')[0];
+  if (avatarSidebar) avatarSidebar.textContent = currentUser.email.charAt(0).toUpperCase();
   loadSection('dashboard');
 }
 
@@ -83,9 +90,27 @@ function bindLogout() {
 }
 
 function bindSidebarToggle() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
   document.getElementById('sidebarToggle').addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
+    sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
   });
+  // Close button inside sidebar (mobile)
+  const closeBtn = document.getElementById('sidebarClose');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+    });
+  }
+  // Overlay click closes sidebar
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    });
+  }
 }
 
 // =============================================================
@@ -99,6 +124,8 @@ function bindSidebar() {
       document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
       link.classList.add('active');
       document.getElementById('sidebar').classList.remove('open');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (overlay) overlay.classList.remove('active');
       loadSection(section);
     });
   });
