@@ -226,7 +226,7 @@ function loadSectionLink(section) {
 // Hero Editor
 // =============================================================
 async function renderHeroEditor(area) {
-  const { data } = await sb.from('hero_content').select('*').limit(1).single();
+  const { data } = await sb.from('hero_content').select('*').order('updated_at', { ascending: false }).limit(1).single();
   const hero = data || {};
 
   area.innerHTML = `
@@ -299,6 +299,8 @@ async function saveHero(existingId) {
     floating_card1_value: document.getElementById('heroCard1Value').value,
     floating_card2_label: document.getElementById('heroCard2Label').value,
     floating_card2_value: document.getElementById('heroCard2Value').value,
+    is_active: true,
+    updated_at: new Date().toISOString(),
   };
 
   let error;
@@ -307,8 +309,8 @@ async function saveHero(existingId) {
   } else {
     ({ error } = await sb.from('hero_content').insert([payload]));
   }
-  if (error) { showToast(error.message, 'error'); return; }
-  showToast('Hero saved!', 'success');
+  if (error) { showToast(error.message, 'error'); console.error('Hero save error:', error); return; }
+  showToast('Hero saved! Changes will show on site immediately.', 'success');
 }
 
 async function loadStats() {

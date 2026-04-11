@@ -602,54 +602,76 @@ async function loadNavLinks() {
 //   btn_primary_text, btn_primary_link, btn_secondary_text, btn_secondary_link,
 //   hero_image_url, floating_card1_label, floating_card1_value, floating_card2_label, floating_card2_value
 async function loadHero() {
-  const { data } = await sb.from('hero_content').select('*').limit(1).single();
-  if (!data) return;
+  const { data, error } = await sb.from('hero_content').select('*').order('updated_at', { ascending: false }).limit(1).single();
+  if (error || !data) return;
 
-  // Title — combine title_line1 and title_highlight
+  // Title — combine title_line1 and title_highlight (always apply)
   const titleEl = document.getElementById('heroTitle');
-  if (titleEl && (data.title_line1 || data.title_highlight)) {
-    titleEl.innerHTML = `${data.title_line1 || ''} <br><span class="pink">${data.title_highlight || ''}</span>`;
+  if (titleEl) {
+    const line1 = data.title_line1 || '';
+    const highlight = data.title_highlight || '';
+    if (line1 || highlight) {
+      titleEl.innerHTML = `${line1} <br><span class="pink">${highlight}</span>`;
+    }
   }
 
-  if (data.description) setTextIfExists('heroDesc', data.description);
-  if (data.badge_text) setTextIfExists('heroBadgeText', data.badge_text);
+  // Description — always apply (even empty clears default)
+  const descEl = document.getElementById('heroDesc');
+  if (descEl && data.description !== null && data.description !== undefined) {
+    descEl.textContent = data.description || '';
+  }
 
-  // Hero image
+  // Badge text — always apply
+  const badgeEl = document.getElementById('heroBadgeText');
+  if (badgeEl && data.badge_text !== null && data.badge_text !== undefined) {
+    badgeEl.textContent = data.badge_text || '';
+  }
+
+  // Hero image — show/hide based on whether URL exists
+  const img = document.getElementById('heroImage');
+  const wrapper = document.getElementById('heroImageWrapper');
   if (data.hero_image_url) {
-    const img = document.getElementById('heroImage');
-    const wrapper = document.getElementById('heroImageWrapper');
     if (img) img.src = data.hero_image_url;
     if (wrapper) wrapper.style.display = '';
+  } else {
+    if (wrapper) wrapper.style.display = 'none';
   }
 
-  // Buttons
-  if (data.btn_primary_text) {
-    const btn = document.getElementById('heroBtnPrimary');
-    if (btn) {
-      btn.querySelector('span').textContent = data.btn_primary_text;
-      if (data.btn_primary_link) btn.href = data.btn_primary_link;
+  // Buttons — always apply text + link
+  const btnPrimary = document.getElementById('heroBtnPrimary');
+  if (btnPrimary) {
+    if (data.btn_primary_text) {
+      const span = btnPrimary.querySelector('span');
+      if (span) span.textContent = data.btn_primary_text;
     }
+    if (data.btn_primary_link) btnPrimary.href = data.btn_primary_link;
   }
-  if (data.btn_secondary_text) {
-    const btn = document.getElementById('heroBtnSecondary');
-    if (btn) {
-      btn.textContent = data.btn_secondary_text;
-      if (data.btn_secondary_link) btn.href = data.btn_secondary_link;
-    }
+  const btnSecondary = document.getElementById('heroBtnSecondary');
+  if (btnSecondary) {
+    if (data.btn_secondary_text) btnSecondary.textContent = data.btn_secondary_text;
+    if (data.btn_secondary_link) btnSecondary.href = data.btn_secondary_link;
   }
 
   // Floating cards
   const card1 = document.getElementById('heroCard1');
   const card2 = document.getElementById('heroCard2');
-  if (card1 && data.floating_card1_label) {
-    card1.style.display = '';
-    setTextIfExists('heroCard1Label', data.floating_card1_label);
-    setTextIfExists('heroCard1Value', data.floating_card1_value);
+  if (card1) {
+    if (data.floating_card1_label) {
+      card1.style.display = '';
+      setTextIfExists('heroCard1Label', data.floating_card1_label);
+      setTextIfExists('heroCard1Value', data.floating_card1_value);
+    } else {
+      card1.style.display = 'none';
+    }
   }
-  if (card2 && data.floating_card2_label) {
-    card2.style.display = '';
-    setTextIfExists('heroCard2Label', data.floating_card2_label);
-    setTextIfExists('heroCard2Value', data.floating_card2_value);
+  if (card2) {
+    if (data.floating_card2_label) {
+      card2.style.display = '';
+      setTextIfExists('heroCard2Label', data.floating_card2_label);
+      setTextIfExists('heroCard2Value', data.floating_card2_value);
+    } else {
+      card2.style.display = 'none';
+    }
   }
 }
 
