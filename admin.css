@@ -541,6 +541,53 @@ body {
   object-fit: cover;
 }
 
+/* ===================== INLINE HINTS ===================== */
+.hint {
+  color: var(--admin-text-dim);
+  font-size: 0.78rem;
+  font-weight: 400;
+  font-style: normal;
+  margin-left: 2px;
+}
+label .hint { display: inline; }
+
+/* ===================== IMAGE UPLOAD ===================== */
+.image-upload-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.image-upload-group input[type="text"] {
+  flex: 1;
+}
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--admin-surface-3);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.upload-btn:hover {
+  background: var(--admin-pink-glow);
+  border-color: var(--admin-pink-border);
+  color: var(--admin-pink);
+}
+.image-preview {
+  max-width: 200px;
+  max-height: 100px;
+  margin-top: 8px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  object-fit: cover;
+}
+
 /* ===================== SIDEBAR TOOLTIPS ===================== */
 .sidebar-tooltip {
   display: none;

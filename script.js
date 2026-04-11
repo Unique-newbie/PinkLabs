@@ -477,6 +477,8 @@ async function loadAllContent() {
       loadAbout(),
       loadTeam(),
       loadFooter(),
+      loadContactInfo(),
+      loadFormConfig(),
     ]);
   } catch (err) {
     console.warn('[PinkLabs] Content load error:', err);
@@ -561,6 +563,20 @@ async function loadSiteSettings() {
   if (footer.description) {
     const el = document.getElementById('footerDesc');
     if (el) el.textContent = footer.description;
+  }
+  if (footer.built_with) {
+    const el = document.getElementById('footerBuiltWith');
+    if (el) el.textContent = footer.built_with;
+  }
+
+  // --- Brand tagline in footer ---
+  if (brand.tagline) {
+    const taglineEl = document.getElementById('footerTagline');
+    if (taglineEl) taglineEl.textContent = brand.tagline;
+  }
+  if (brand.description) {
+    const el = document.getElementById('footerDesc');
+    if (el && !footer.description) el.textContent = brand.description;
   }
 }
 
@@ -942,6 +958,71 @@ async function loadSectionHeader(sectionKey, containerId) {
     if (tagEl && data.tag_text) tagEl.textContent = data.tag_text;
     if (titleEl && data.title) titleEl.textContent = data.title;
     if (subtitleEl && data.subtitle) subtitleEl.textContent = data.subtitle;
+  } catch {}
+}
+
+// --- Contact Info (reachout page) ---
+// Loads email, phone, location from site_settings.brand into reachout page
+async function loadContactInfo() {
+  try {
+    const { data } = await sb.from('site_settings').select('*').eq('key', 'brand').single();
+    if (!data) return;
+    const brand = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+
+    // Update email link
+    if (brand.email) {
+      const emailLinks = document.querySelectorAll('a[href^="mailto:"]');
+      emailLinks.forEach(el => {
+        el.href = `mailto:${brand.email}`;
+        el.textContent = brand.email;
+      });
+    }
+    // Update phone link
+    if (brand.phone) {
+      const phoneLinks = document.querySelectorAll('a[href^="tel:"]');
+      phoneLinks.forEach(el => {
+        el.href = `tel:${brand.phone.replace(/\s/g, '')}`;
+        el.textContent = brand.phone;
+      });
+    }
+    // Update location
+    if (brand.location) {
+      const locationEls = document.querySelectorAll('.reachout-detail');
+      locationEls.forEach(detail => {
+        const h4 = detail.querySelector('h4');
+        if (h4 && h4.textContent.trim() === 'Visit Us') {
+          const p = detail.querySelector('p');
+          if (p) p.textContent = brand.location;
+        }
+      });
+    }
+  } catch {}
+}
+
+// --- Form Config (reachout page dropdowns) ---
+// Loads project types and budget ranges from site_settings.contact_form
+async function loadFormConfig() {
+  try {
+    const { data } = await sb.from('site_settings').select('*').eq('key', 'contact_form').single();
+    if (!data) return;
+    const config = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+
+    // Project types dropdown
+    if (config.project_types && config.project_types.length > 0) {
+      const sel = document.getElementById('roProject');
+      if (sel) {
+        sel.innerHTML = '<option value="" disabled selected>Select type</option>' +
+          config.project_types.map(t => `<option value="${t}">${t}</option>`).join('');
+      }
+    }
+    // Budget ranges dropdown
+    if (config.budget_ranges && config.budget_ranges.length > 0) {
+      const sel = document.getElementById('roBudget');
+      if (sel) {
+        sel.innerHTML = '<option value="">Select budget (optional)</option>' +
+          config.budget_ranges.map(b => `<option value="${b}">${b}</option>`).join('');
+      }
+    }
   } catch {}
 }
 
