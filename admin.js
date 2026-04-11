@@ -233,12 +233,12 @@ async function renderHeroEditor(area) {
     <div class="section-panel">
       <div class="section-panel-header"><h3>Hero Content</h3></div>
       <div class="section-panel-body" id="heroForm">
-        <div class="field"><label>Badge Text</label><input type="text" id="heroBadge" value="${esc(hero.badge_text)}"></div>
+        <div class="field"><label>Badge Text <span class="hint">(small label above the title — e.g. "Available for Projects")</span></label><input type="text" id="heroBadge" value="${esc(hero.badge_text)}"></div>
         <div class="field-row">
-          <div class="field"><label>Title Line 1</label><input type="text" id="heroTitle1" value="${esc(hero.title_line1)}"></div>
-          <div class="field"><label>Title Highlight (pink)</label><input type="text" id="heroHighlight" value="${esc(hero.title_highlight)}"></div>
+          <div class="field"><label>Title Line 1 <span class="hint">(main heading text)</span></label><input type="text" id="heroTitle1" value="${esc(hero.title_line1)}"></div>
+          <div class="field"><label>Title Highlight <span class="hint">(pink colored text on 2nd line)</span></label><input type="text" id="heroHighlight" value="${esc(hero.title_highlight)}"></div>
         </div>
-        <div class="field"><label>Description</label><textarea id="heroDesc">${esc(hero.description)}</textarea></div>
+        <div class="field"><label>Description <span class="hint">(paragraph below the title)</span></label><textarea id="heroDesc">${esc(hero.description)}</textarea></div>
         <div class="field-row">
           <div class="field"><label>Primary Button Text</label><input type="text" id="heroBtnPrimary" value="${esc(hero.btn_primary_text)}"></div>
           <div class="field"><label>Primary Button Link</label><input type="text" id="heroBtnPrimaryLink" value="${esc(hero.btn_primary_link)}"></div>
@@ -247,9 +247,20 @@ async function renderHeroEditor(area) {
           <div class="field"><label>Secondary Button Text</label><input type="text" id="heroBtnSecondary" value="${esc(hero.btn_secondary_text)}"></div>
           <div class="field"><label>Secondary Button Link</label><input type="text" id="heroBtnSecondaryLink" value="${esc(hero.btn_secondary_link)}"></div>
         </div>
-        <div class="field"><label>Hero Image URL</label><input type="url" id="heroImage" value="${esc(hero.hero_image_url)}"></div>
+        <div class="field">
+          <label>Hero Image <span class="hint">(displayed on the right side of the hero — paste URL or upload)</span></label>
+          <div class="image-upload-group">
+            <input type="text" id="heroImage" value="${esc(hero.hero_image_url)}" placeholder="Paste URL or upload image">
+            <label class="upload-btn" for="upload_hero_img">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload
+            </label>
+            <input type="file" id="upload_hero_img" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'heroImage')">
+          </div>
+          ${hero.hero_image_url ? `<img src="${esc(hero.hero_image_url)}" class="image-preview" alt="hero preview">` : ''}
+        </div>
         <div class="field-row">
-          <div class="field"><label>Floating Card 1 Label</label><input type="text" id="heroCard1Label" value="${esc(hero.floating_card1_label)}"></div>
+          <div class="field"><label>Floating Card 1 Label <span class="hint">(small card floating on hero image)</span></label><input type="text" id="heroCard1Label" value="${esc(hero.floating_card1_label)}"></div>
           <div class="field"><label>Floating Card 1 Value</label><input type="text" id="heroCard1Value" value="${esc(hero.floating_card1_value)}"></div>
         </div>
         <div class="field-row">
@@ -264,7 +275,7 @@ async function renderHeroEditor(area) {
 
     <div class="section-panel">
       <div class="section-panel-header">
-        <h3>Stats</h3>
+        <h3>Stats <span class="hint" style="font-weight:400">(counter bar below the hero — e.g. "100+ Projects")</span></h3>
         <button class="btn btn-pink btn-sm" onclick="openStatModal()">+ Add Stat</button>
       </div>
       <div class="section-panel-body" id="statsContainer">Loading stats...</div>
@@ -336,14 +347,14 @@ async function renderCrudList(area, table, fields) {
   area.innerHTML = `
     <div class="section-panel">
       <div class="section-panel-header">
-        <h3>Section Header</h3>
+        <h3>Section Header <span class="hint" style="font-weight:400">(appears above the content on the page)</span></h3>
       </div>
       <div class="section-panel-body">
         <div class="field-row">
-          <div class="field"><label>Tag Text</label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
-          <div class="field"><label>Title</label><input type="text" id="sh_title" value="${esc(header.title)}"></div>
+          <div class="field"><label>Tag Text <span class="hint">(small pink label — e.g. "What We Do")</span></label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
+          <div class="field"><label>Title <span class="hint">(main heading — e.g. "Our Services")</span></label><input type="text" id="sh_title" value="${esc(header.title)}"></div>
         </div>
-        <div class="field"><label>Subtitle</label><input type="text" id="sh_subtitle" value="${esc(header.subtitle)}"></div>
+        <div class="field"><label>Subtitle <span class="hint">(description below the heading)</span></label><input type="text" id="sh_subtitle" value="${esc(header.subtitle)}"></div>
         <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSectionHeader('${getSectionKey(table)}', '${header.id || ''}')">Save Header</button>
       </div>
     </div>
@@ -359,6 +370,7 @@ async function renderCrudList(area, table, fields) {
           ${items.map(item => `
             <div class="item-row">
               ${item.image_url ? `<img class="item-img" src="${esc(item.image_url)}" alt="">` : ''}
+              ${item.avatar_url ? `<img class="item-img" src="${esc(item.avatar_url)}" alt="" style="border-radius:50%">` : ''}
               <div class="item-info">
                 <div class="item-title">${esc(item[fields[0]] || '')}</div>
                 <div class="item-sub">${esc(item[fields[1]] || '').substring(0, 80)}</div>
@@ -416,23 +428,47 @@ async function openCrudModal(table, fields, itemId) {
 
   const isImageField = (f) => f.endsWith('_url') && (f.includes('image') || f.includes('avatar'));
 
+  // Context-aware hints for each field so admins know what to enter
+  const fieldHints = {
+    icon_svg: 'Paste SVG markup for the icon — e.g. from heroicons.com or lucide.dev',
+    step_number: 'Step number (e.g. "01", "02") — shown before the step title',
+    tag: 'Category label shown on the portfolio card — e.g. "Web App", "E-Commerce"',
+    image_url: 'Upload or paste the project thumbnail image URL',
+    project_url: 'Link to the live website — visitors can click to view it',
+    is_featured: 'Featured projects are highlighted on the portfolio page',
+    client_name: 'Full name of the client who gave the testimonial',
+    client_role: 'Job title or role — e.g. "CEO", "Marketing Director"',
+    client_company: 'Company name — e.g. "Acme Corp"',
+    client_initials: 'Leave empty to auto-generate from name — or enter custom (e.g. "JD")',
+    quote: 'The client\'s testimonial text — keep it concise and impactful',
+    rating: 'Star rating from 1 to 5 — shown as gold stars',
+    avatar_url: 'Profile photo of the team member — upload or paste URL',
+    bio: 'Brief bio or description — 1-2 sentences recommended',
+    href: 'Link URL — e.g. "#services", "/about.html", or "https://..."',
+    is_cta: 'Mark this as the highlighted Call-to-Action button in the navbar',
+    platform: 'Social media platform name — e.g. "Twitter", "LinkedIn", "Instagram"',
+    url: 'Full URL to the social profile — e.g. "https://twitter.com/pinklabs"',
+    is_floating: 'Show as floating icon on the side of the page',
+  };
+
   const formHtml = fieldsArr.map(f => {
     const label = f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const val = item[f] ?? '';
+    const hint = fieldHints[f] ? ` <span class="hint">(${fieldHints[f]})</span>` : '';
 
-    if (f === 'is_featured' || f === 'is_cta' || f === 'is_popular' || f === 'is_active') {
-      return `<div class="field"><div class="checkbox-row"><input type="checkbox" id="modal_${f}" ${val ? 'checked' : ''}><label for="modal_${f}">${label}</label></div></div>`;
+    if (f === 'is_featured' || f === 'is_cta' || f === 'is_popular' || f === 'is_active' || f === 'is_floating') {
+      return `<div class="field"><div class="checkbox-row"><input type="checkbox" id="modal_${f}" ${val ? 'checked' : ''}><label for="modal_${f}">${label}${hint}</label></div></div>`;
     }
     if (f === 'rating') {
-      return `<div class="field"><label>${label}</label><input type="number" id="modal_${f}" value="${val}" min="1" max="5"></div>`;
+      return `<div class="field"><label>${label}${hint}</label><input type="number" id="modal_${f}" value="${val}" min="1" max="5"></div>`;
     }
     if (f === 'description' || f === 'quote' || f === 'answer' || f === 'icon_svg' || f === 'bio') {
-      return `<div class="field"><label>${label}</label><textarea id="modal_${f}">${esc(val)}</textarea></div>`;
+      return `<div class="field"><label>${label}${hint}</label><textarea id="modal_${f}">${esc(val)}</textarea></div>`;
     }
     if (isImageField(f)) {
       return `
         <div class="field">
-          <label>${label}</label>
+          <label>${label}${hint}</label>
           <div class="image-upload-group">
             <input type="text" id="modal_${f}" value="${esc(val)}" placeholder="Paste URL or upload image">
             <label class="upload-btn" for="upload_${f}">
@@ -444,13 +480,13 @@ async function openCrudModal(table, fields, itemId) {
           ${val ? `<img src="${esc(val)}" class="image-preview" alt="preview">` : ''}
         </div>`;
     }
-    return `<div class="field"><label>${label}</label><input type="text" id="modal_${f}" value="${esc(val)}"></div>`;
+    return `<div class="field"><label>${label}${hint}</label><input type="text" id="modal_${f}" value="${esc(val)}"></div>`;
   }).join('');
 
   showModal(itemId ? 'Edit Item' : 'Add New Item', formHtml, async () => {
     const payload = {};
     fieldsArr.forEach(f => {
-      if (f === 'is_featured' || f === 'is_cta' || f === 'is_popular' || f === 'is_active') {
+      if (f === 'is_featured' || f === 'is_cta' || f === 'is_popular' || f === 'is_active' || f === 'is_floating') {
         payload[f] = document.getElementById(`modal_${f}`).checked;
       } else if (f === 'rating') {
         payload[f] = parseInt(document.getElementById(`modal_${f}`).value) || 5;
@@ -549,9 +585,9 @@ async function renderAboutEditor(area) {
 
   area.innerHTML = `
     <div class="section-panel">
-      <div class="section-panel-header"><h3>About Section Content</h3></div>
+      <div class="section-panel-header"><h3>About Section Content <span class="hint" style="font-weight:400">(shown in the About section on the homepage)</span></h3></div>
       <div class="section-panel-body">
-        <div class="field"><label>Title</label><input type="text" id="aboutTitle" value="${esc(about.title)}"></div>
+        <div class="field"><label>Title <span class="hint">(heading — e.g. "Who We Are")</span></label><input type="text" id="aboutTitle" value="${esc(about.title)}"></div>
         <div class="field"><label>Description</label><textarea id="aboutDesc" rows="4">${esc(about.description)}</textarea></div>
         <div class="section-panel-header" style="margin-top:20px;padding:0;border:0"><h3>Stats</h3></div>
         <div id="aboutStatsContainer">
@@ -622,10 +658,10 @@ async function renderPricingEditor(area) {
 
   area.innerHTML = `
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Section Header</h3></div>
+      <div class="section-panel-header"><h3>Section Header <span class="hint" style="font-weight:400">(heading above pricing cards)</span></h3></div>
       <div class="section-panel-body">
         <div class="field-row">
-          <div class="field"><label>Tag</label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
+          <div class="field"><label>Tag <span class="hint">(e.g. "Pricing")</span></label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
           <div class="field"><label>Title</label><input type="text" id="sh_title" value="${esc(header.title)}"></div>
         </div>
         <div class="field"><label>Subtitle</label><input type="text" id="sh_subtitle" value="${esc(header.subtitle)}"></div>
@@ -728,10 +764,10 @@ async function renderContactInfoEditor(area) {
 
   area.innerHTML = `
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Contact Section Header</h3></div>
+      <div class="section-panel-header"><h3>Contact Section Header <span class="hint" style="font-weight:400">(heading above the contact form on the homepage)</span></h3></div>
       <div class="section-panel-body">
         <div class="field-row">
-          <div class="field"><label>Tag</label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
+          <div class="field"><label>Tag <span class="hint">(pink label — e.g. "Get In Touch")</span></label><input type="text" id="sh_tag" value="${esc(header.tag_text)}"></div>
           <div class="field"><label>Title</label><input type="text" id="sh_title" value="${esc(header.title)}"></div>
         </div>
         <div class="field"><label>Subtitle</label><input type="text" id="sh_subtitle" value="${esc(header.subtitle)}"></div>
@@ -740,7 +776,7 @@ async function renderContactInfoEditor(area) {
     </div>
 
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Contact Details</h3></div>
+      <div class="section-panel-header"><h3>Contact Details <span class="hint" style="font-weight:400">(shown on the contact page and footer)</span></h3></div>
       <div class="section-panel-body">
         <div class="field-row">
           <div class="field"><label>Email</label><input type="email" id="brandEmail" value="${esc(brand.email)}"></div>
@@ -752,7 +788,7 @@ async function renderContactInfoEditor(area) {
     </div>
 
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Form Config</h3></div>
+      <div class="section-panel-header"><h3>Form Config <span class="hint" style="font-weight:400">(dropdown options in the contact form)</span></h3></div>
       <div class="section-panel-body">
         <div class="field"><label>Project Types <span class="hint">(one per line)</span></label>
           <textarea id="formProjectTypes" rows="4">${(formConfig.project_types || []).join('\n')}</textarea>
@@ -766,7 +802,7 @@ async function renderContactInfoEditor(area) {
 
     <div class="section-panel">
       <div class="section-panel-header">
-        <h3>Social Links</h3>
+        <h3>Social Links <span class="hint" style="font-weight:400">(footer icons and floating sidebar)</span></h3>
         <button class="btn btn-pink btn-sm" onclick="openCrudModal('social_links', ['platform','url','icon_svg','is_floating'], null)">+ Add Link</button>
       </div>
       <div class="section-panel-body">
@@ -910,13 +946,13 @@ async function renderSettings(area) {
   area.innerHTML = `
     <!-- Branding & Identity -->
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Branding & Identity</h3></div>
+      <div class="section-panel-header"><h3>Branding & Identity <span class="hint" style="font-weight:400">(controls navbar logo, footer, and SEO defaults)</span></h3></div>
       <div class="section-panel-body">
         <div class="field-row">
-          <div class="field"><label>Brand Name</label><input type="text" id="setBrandName" value="${esc(brand.name)}"></div>
-          <div class="field"><label>Tagline</label><input type="text" id="setBrandTagline" value="${esc(brand.tagline)}"></div>
+          <div class="field"><label>Brand Name <span class="hint">(shown in navbar and page title)</span></label><input type="text" id="setBrandName" value="${esc(brand.name)}"></div>
+          <div class="field"><label>Tagline <span class="hint">(shown in footer under brand name)</span></label><input type="text" id="setBrandTagline" value="${esc(brand.tagline)}"></div>
         </div>
-        <div class="field"><label>Description</label><textarea id="setBrandDesc">${esc(brand.description)}</textarea></div>
+        <div class="field"><label>Description <span class="hint">(footer description and meta fallback)</span></label><textarea id="setBrandDesc">${esc(brand.description)}</textarea></div>
 
         <div class="field-row">
           <div class="field">
@@ -951,11 +987,11 @@ async function renderSettings(area) {
 
     <!-- Footer -->
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Footer</h3></div>
+      <div class="section-panel-header"><h3>Footer <span class="hint" style="font-weight:400">(text at the very bottom of every page)</span></h3></div>
       <div class="section-panel-body">
-        <div class="field"><label>Copyright Text</label><input type="text" id="setFooterCopy" value="${esc(footer.copyright)}"></div>
-        <div class="field"><label>Footer Description</label><input type="text" id="setFooterDesc" value="${esc(footer.description)}"></div>
-        <div class="field"><label>Built With Text</label><input type="text" id="setFooterBuilt" value="${esc(footer.built_with)}"></div>
+        <div class="field"><label>Copyright Text <span class="hint">(e.g. "© 2025 PinkLabs. All rights reserved.")</span></label><input type="text" id="setFooterCopy" value="${esc(footer.copyright)}"></div>
+        <div class="field"><label>Footer Description <span class="hint">(short text shown in the footer column)</span></label><input type="text" id="setFooterDesc" value="${esc(footer.description)}"></div>
+        <div class="field"><label>Built With Text <span class="hint">("Made with ❤️ by PinkLabs" — bottom right)</span></label><input type="text" id="setFooterBuilt" value="${esc(footer.built_with)}"></div>
         <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSettingsGroup('footer')">Save Footer</button>
       </div>
     </div>

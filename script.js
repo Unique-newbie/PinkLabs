@@ -88,12 +88,12 @@ function initPreloader() {
     setTimeout(() => {
       preloader.classList.add('hidden');
       setTimeout(() => preloader.remove(), 500);
-    }, 600);
+    }, 300);
   });
-  // Fallback: always hide after 3s
   setTimeout(() => {
     preloader.classList.add('hidden');
-  }, 3000);
+    setTimeout(() => preloader.remove(), 500);
+  }, 4000);
 }
 
 // =============================================================
@@ -102,9 +102,17 @@ function initPreloader() {
 function initNavbar() {
   const navbar = document.getElementById('navbar');
   if (!navbar) return;
-  const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 60);
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => {
+    const cur = window.scrollY;
+    navbar.classList.toggle('scrolled', cur > 50);
+    if (cur > 400) {
+      navbar.classList.toggle('navbar-hidden', cur > lastScroll);
+    } else {
+      navbar.classList.remove('navbar-hidden');
+    }
+    lastScroll = cur;
+  }, { passive: true });
 }
 
 // =============================================================
@@ -112,23 +120,19 @@ function initNavbar() {
 // =============================================================
 function initMobileMenu() {
   const toggle = document.getElementById('menuToggle');
-  const navLinks = document.getElementById('navLinks');
-  if (!toggle || !navLinks) return;
-
+  const nav = document.getElementById('navLinks');
+  if (!toggle || !nav) return;
   toggle.addEventListener('click', () => {
-    const open = toggle.classList.toggle('active');
-    navLinks.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', open);
-    document.body.style.overflow = open ? 'hidden' : '';
+    const isOpen = nav.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+    toggle.setAttribute('aria-expanded', isOpen);
   });
-
-  navLinks.addEventListener('click', (e) => {
-    if (e.target.matches('a')) {
-      toggle.classList.remove('active');
-      navLinks.classList.remove('open');
+  nav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    }
+    });
   });
 }
 
@@ -136,12 +140,16 @@ function initMobileMenu() {
 // Smooth Scroll
 // =============================================================
 function initSmoothScroll() {
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', (e) => {
-      const target = document.querySelector(a.getAttribute('href'));
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', (e) => {
+      const href = anchor.getAttribute('href');
+      if (href === '#' || href === '#main') return;
+      const target = document.querySelector(href);
       if (target) {
         e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const navH = document.getElementById('navbar')?.offsetHeight || 0;
+        const y = target.getBoundingClientRect().top + window.scrollY - navH - 20;
+        window.scrollTo({ top: y, behavior: 'smooth' });
       }
     });
   });
@@ -153,10 +161,12 @@ function initSmoothScroll() {
 function initBackToTop() {
   const btn = document.getElementById('backToTop');
   if (!btn) return;
-
-  const onScroll = () => btn.classList.toggle('visible', window.scrollY > 500);
-  window.addEventListener('scroll', onScroll, { passive: true });
-  btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 600);
+  }, { passive: true });
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
 // =============================================================
@@ -164,21 +174,18 @@ function initBackToTop() {
 // =============================================================
 function initCookieConsent() {
   const el = document.getElementById('cookieConsent');
-  const accept = document.getElementById('cookieAccept');
-  const decline = document.getElementById('cookieDecline');
-  if (!el) return;
-
-  if (localStorage.getItem('pinklabs-cookies')) return;
-
-  setTimeout(() => el.classList.add('visible'), 2500);
-
-  const dismiss = (val) => {
-    localStorage.setItem('pinklabs-cookies', val);
+  if (!el || localStorage.getItem('pinklabs-cookies')) { if (el) el.remove(); return; }
+  setTimeout(() => el.classList.add('visible'), 2000);
+  document.getElementById('cookieAccept')?.addEventListener('click', () => {
+    localStorage.setItem('pinklabs-cookies', 'accepted');
     el.classList.remove('visible');
-    setTimeout(() => el.remove(), 500);
-  };
-  if (accept) accept.addEventListener('click', () => dismiss('accepted'));
-  if (decline) decline.addEventListener('click', () => dismiss('declined'));
+    setTimeout(() => el.remove(), 400);
+  });
+  document.getElementById('cookieDecline')?.addEventListener('click', () => {
+    localStorage.setItem('pinklabs-cookies', 'declined');
+    el.classList.remove('visible');
+    setTimeout(() => el.remove(), 400);
+  });
 }
 
 // =============================================================
@@ -187,16 +194,14 @@ function initCookieConsent() {
 function initScrollReveal() {
   const els = document.querySelectorAll('.reveal');
   if (!els.length) return;
-
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, i) => {
+    entries.forEach(entry => {
       if (entry.isIntersecting) {
-        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        entry.target.classList.add('revealed');
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
   els.forEach(el => observer.observe(el));
 }
 
@@ -204,22 +209,19 @@ function initScrollReveal() {
 // Scroll Spy
 // =============================================================
 function initScrollSpy() {
-  const sections = document.querySelectorAll('.section');
-  const links = document.querySelectorAll('.nav-link[href^="#"]');
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.nav-link');
   if (!sections.length || !links.length) return;
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const id = entry.target.id;
-        links.forEach(link => {
-          link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
-        });
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
       }
     });
   }, { threshold: 0.3 });
-
-  sections.forEach(s => observer.observe(s));
+  sections.forEach(sec => observer.observe(sec));
 }
 
 // =============================================================
@@ -228,40 +230,26 @@ function initScrollSpy() {
 function initAnimatedCounters() {
   const counters = document.querySelectorAll('.stat-number[data-count]');
   if (!counters.length) return;
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        animateCounter(entry.target);
-        observer.unobserve(entry.target);
+        const el = entry.target;
+        const target = parseInt(el.dataset.count, 10);
+        const suffix = el.dataset.suffix || '';
+        const duration = 2000;
+        let start = 0;
+        const step = (timestamp) => {
+          if (!start) start = timestamp;
+          const progress = Math.min((timestamp - start) / duration, 1);
+          el.textContent = Math.floor(progress * target) + suffix;
+          if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        observer.unobserve(el);
       }
     });
   }, { threshold: 0.5 });
-
   counters.forEach(c => observer.observe(c));
-}
-
-function animateCounter(el) {
-  const target = parseInt(el.getAttribute('data-count'));
-  const suffix = el.querySelector('.pink');
-  const suffixText = suffix ? suffix.textContent : '';
-  const duration = 2000;
-  const start = performance.now();
-
-  function tick(now) {
-    const progress = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.floor(eased * target);
-    el.textContent = current;
-    if (suffix) {
-      const span = document.createElement('span');
-      span.className = 'pink';
-      span.textContent = suffixText;
-      el.appendChild(span);
-    }
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
 }
 
 // =============================================================
@@ -269,55 +257,177 @@ function animateCounter(el) {
 // =============================================================
 function initTestimonialCarousel() {
   const track = document.getElementById('testimonialTrack');
-  const prevBtn = document.getElementById('testimonialPrev');
-  const nextBtn = document.getElementById('testimonialNext');
-  const dotsContainer = document.getElementById('testimonialDots');
-  if (!track || !prevBtn || !nextBtn) return;
+  const prev = document.getElementById('testimonialPrev');
+  const next = document.getElementById('testimonialNext');
+  const dots = document.getElementById('testimonialDots');
+  if (!track || !prev || !next) return;
+  let idx = 0;
 
-  const cards = track.querySelectorAll('.testimonial-card');
-  if (!cards.length) return;
-
-  let page = 0;
-  let perView = getPerView();
-
-  function getPerView() {
-    if (window.innerWidth <= 768) return 1;
-    if (window.innerWidth <= 1024) return 2;
-    return 3;
-  }
-
-  function totalPages() {
-    return Math.max(1, Math.ceil(cards.length / perView));
-  }
-
-  function goTo(p) {
-    page = Math.max(0, Math.min(p, totalPages() - 1));
-    const cardW = cards[0].offsetWidth + 28; // card width + gap
-    track.style.transform = `translateX(-${page * perView * cardW}px)`;
-    updateDots();
-  }
-
-  function updateDots() {
-    if (!dotsContainer) return;
-    dotsContainer.innerHTML = '';
-    const total = totalPages();
-    for (let i = 0; i < total; i++) {
-      const dot = document.createElement('div');
-      dot.className = `dot${i === page ? ' active' : ''}`;
-      dot.addEventListener('click', () => goTo(i));
-      dotsContainer.appendChild(dot);
+  function update() {
+    const cards = track.querySelectorAll('.testimonial-card');
+    if (!cards.length) return;
+    const width = cards[0].offsetWidth + 24;
+    track.style.transform = `translateX(-${idx * width}px)`;
+    if (dots) {
+      dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
     }
   }
 
-  prevBtn.addEventListener('click', () => goTo(page - 1));
-  nextBtn.addEventListener('click', () => goTo(page + 1));
+  function buildDots() {
+    const cards = track.querySelectorAll('.testimonial-card');
+    if (!dots || !cards.length) return;
+    dots.innerHTML = '';
+    cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = `dot${i === 0 ? ' active' : ''}`;
+      dot.addEventListener('click', () => { idx = i; update(); });
+      dots.appendChild(dot);
+    });
+  }
 
-  window.addEventListener('resize', () => {
-    perView = getPerView();
-    goTo(0);
+  prev.addEventListener('click', () => {
+    const cards = track.querySelectorAll('.testimonial-card');
+    if (!cards.length) return;
+    idx = (idx - 1 + cards.length) % cards.length;
+    update();
+  });
+  next.addEventListener('click', () => {
+    const cards = track.querySelectorAll('.testimonial-card');
+    if (!cards.length) return;
+    idx = (idx + 1) % cards.length;
+    update();
   });
 
-  updateDots();
+  setTimeout(() => { buildDots(); update(); }, 100);
+  let autoplay = setInterval(() => {
+    const cards = track.querySelectorAll('.testimonial-card');
+    if (cards.length) { idx = (idx + 1) % cards.length; update(); }
+  }, 5000);
+  track.addEventListener('mouseenter', () => clearInterval(autoplay));
+}
+
+// =============================================================
+// Contact Form
+// =============================================================
+function initContactForm() {
+  const form = document.getElementById('contactForm');
+  if (!form || !sb) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    const payload = {
+      name: form.querySelector('[name="name"]')?.value || '',
+      email: form.querySelector('[name="email"]')?.value || '',
+      phone: form.querySelector('[name="phone"]')?.value || '',
+      project_type: form.querySelector('[name="project_type"]')?.value || '',
+      budget: form.querySelector('[name="budget"]')?.value || '',
+      message: form.querySelector('[name="message"]')?.value || '',
+    };
+
+    const { error } = await sb.from('contact_submissions').insert([payload]);
+    btn.disabled = false;
+    if (error) {
+      btn.textContent = 'Send Message';
+      showContactToast('Something went wrong. Please try again.', 'error');
+    } else {
+      btn.textContent = 'Message Sent!';
+      form.reset();
+      showContactToast('Thanks! We\'ll get back to you soon.', 'success');
+      setTimeout(() => { btn.textContent = 'Send Message'; }, 3000);
+    }
+  });
+}
+
+function showContactToast(msg, type) {
+  const toast = document.getElementById('toast');
+  const message = document.getElementById('toastMessage');
+  if (!toast || !message) return;
+  message.textContent = msg;
+  toast.className = `toast ${type} visible`;
+  setTimeout(() => toast.classList.remove('visible'), 4000);
+}
+
+// =============================================================
+// Project Modal
+// =============================================================
+function initProjectModal() {
+  const modal = document.getElementById('projectModal');
+  if (!modal) return;
+  const overlay = document.getElementById('modalOverlay');
+  const closeBtn = document.getElementById('modalClose');
+
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.work-card');
+    if (!card) return;
+    const imgEl = card.querySelector('img');
+    const tagEl = card.querySelector('.work-card-tag');
+    const titleEl = card.querySelector('h3');
+    const descEl = card.querySelector('p');
+
+    document.getElementById('modalImage').src = imgEl?.src || '';
+    document.getElementById('modalTag').textContent = tagEl?.textContent || '';
+    document.getElementById('modalTitle').textContent = titleEl?.textContent || '';
+    document.getElementById('modalDesc').textContent = descEl?.textContent || '';
+
+    // Tech stack
+    const tech = card.dataset.tech;
+    const techSection = document.getElementById('modalTechSection');
+    const techContainer = document.getElementById('modalTech');
+    if (tech && techContainer) {
+      techContainer.innerHTML = tech.split(',').map(t => `<span class="tech-tag">${t.trim()}</span>`).join('');
+      techSection.style.display = '';
+    } else if (techSection) {
+      techSection.style.display = 'none';
+    }
+
+    // Links
+    const linksSection = document.getElementById('modalLinksSection');
+    const linksContainer = document.getElementById('modalLinks');
+    const live = card.dataset.live;
+    const github = card.dataset.github;
+    if ((live || github) && linksContainer) {
+      let linksHtml = '';
+      if (live) linksHtml += `<a href="${live}" target="_blank" class="modal-link">Live Site ↗</a>`;
+      if (github) linksHtml += `<a href="${github}" target="_blank" class="modal-link">GitHub ↗</a>`;
+      linksContainer.innerHTML = linksHtml;
+      linksSection.style.display = '';
+    } else if (linksSection) {
+      linksSection.style.display = 'none';
+    }
+
+    // Gallery
+    const gallerySection = document.getElementById('modalGallerySection');
+    const galleryContainer = document.getElementById('modalGallery');
+    const gallery = card.dataset.gallery;
+    if (gallery && galleryContainer) {
+      try {
+        const urls = JSON.parse(gallery);
+        if (urls.length) {
+          galleryContainer.innerHTML = urls.map(url => `<img src="${url}" alt="" loading="lazy">`).join('');
+          gallerySection.style.display = '';
+        } else { gallerySection.style.display = 'none'; }
+      } catch { gallerySection.style.display = 'none'; }
+    } else if (gallerySection) {
+      gallerySection.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  });
+
+  const closeModal = () => {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (overlay) overlay.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 }
 
 // =============================================================
@@ -325,187 +435,26 @@ function initTestimonialCarousel() {
 // =============================================================
 function toggleFaq(btn) {
   const item = btn.parentElement;
-  const wasActive = item.classList.contains('active');
-  // Close all
-  document.querySelectorAll('.faq-item').forEach(i => {
-    i.classList.remove('active');
-    const ans = i.querySelector('.faq-answer');
-    if (ans) ans.style.maxHeight = null;
-    const q = i.querySelector('.faq-question');
-    if (q) q.setAttribute('aria-expanded', 'false');
-  });
-  // Open clicked (if wasn't already open)
-  if (!wasActive) {
-    item.classList.add('active');
-    const answer = item.querySelector('.faq-answer');
-    if (answer) answer.style.maxHeight = answer.scrollHeight + 'px';
-    btn.setAttribute('aria-expanded', 'true');
-  }
-}
-
-// =============================================================
-// Project Modal — Rich Expandable View
-// =============================================================
-function initProjectModal() {
-  const modal = document.getElementById('projectModal');
-  const overlay = document.getElementById('modalOverlay');
-  const closeBtn = document.getElementById('modalClose');
-  if (!modal) return;
-
-  // Click handler for work cards
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.work-card');
-    if (!card) return;
-    openProjectModal(card);
-  });
-
-  // Close
-  if (overlay) overlay.addEventListener('click', closeProjectModal);
-  if (closeBtn) closeBtn.addEventListener('click', closeProjectModal);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeProjectModal(); });
-}
-
-function openProjectModal(card) {
-  const modal = document.getElementById('projectModal');
-  if (!modal) return;
-
-  // Extract data from card
-  const img = card.querySelector('.work-card-img img');
-  const tag = card.querySelector('.work-card-tag');
-  const title = card.querySelector('h3');
-  const desc = card.getAttribute('data-details') || card.querySelector('p')?.textContent || '';
-  const tech = card.getAttribute('data-tech') || '';
-  const liveUrl = card.getAttribute('data-live') || '';
-  const githubUrl = card.getAttribute('data-github') || '';
-  const gallery = card.getAttribute('data-gallery') || '';
-
-  // Fill modal
-  const modalImg = document.getElementById('modalImage');
-  const modalTag = document.getElementById('modalTag');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalDesc = document.getElementById('modalDesc');
-
-  if (modalImg && img) { modalImg.src = img.src; modalImg.alt = img.alt; }
-  if (modalTag && tag) modalTag.textContent = tag.textContent;
-  if (modalTitle && title) modalTitle.textContent = title.textContent;
-  if (modalDesc) modalDesc.textContent = desc;
-
-  // Tech stack
-  const techContainer = document.getElementById('modalTech');
-  const techSection = document.getElementById('modalTechSection');
-  if (techContainer && techSection) {
-    techContainer.innerHTML = '';
-    if (tech) {
-      const techs = tech.split(',').map(t => t.trim()).filter(Boolean);
-      techs.forEach(t => {
-        const span = document.createElement('span');
-        span.className = 'modal-tech-tag';
-        span.textContent = t;
-        techContainer.appendChild(span);
-      });
-      techSection.style.display = 'block';
-    } else {
-      techSection.style.display = 'none';
-    }
-  }
-
-  // Links
-  const linksContainer = document.getElementById('modalLinks');
-  const linksSection = document.getElementById('modalLinksSection');
-  if (linksContainer && linksSection) {
-    linksContainer.innerHTML = '';
-    let hasLinks = false;
-    if (liveUrl) {
-      hasLinks = true;
-      linksContainer.innerHTML += `<a href="${liveUrl}" target="_blank" rel="noopener" class="modal-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Live Site</a>`;
-    }
-    if (githubUrl) {
-      hasLinks = true;
-      linksContainer.innerHTML += `<a href="${githubUrl}" target="_blank" rel="noopener" class="modal-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg> GitHub</a>`;
-    }
-    linksSection.style.display = hasLinks ? 'block' : 'none';
-  }
-
-  // Gallery
-  const galleryContainer = document.getElementById('modalGallery');
-  const gallerySection = document.getElementById('modalGallerySection');
-  if (galleryContainer && gallerySection) {
-    galleryContainer.innerHTML = '';
-    if (gallery) {
-      const imgs = gallery.split(',').map(u => u.trim()).filter(Boolean);
-      imgs.forEach(url => {
-        const imgEl = document.createElement('img');
-        imgEl.src = url;
-        imgEl.alt = 'Project screenshot';
-        imgEl.loading = 'lazy';
-        galleryContainer.appendChild(imgEl);
-      });
-      gallerySection.style.display = 'block';
-    } else {
-      gallerySection.style.display = 'none';
-    }
-  }
-
-  // Open
-  modal.classList.add('active');
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeProjectModal() {
-  const modal = document.getElementById('projectModal');
-  if (!modal) return;
-  modal.classList.remove('active');
-  modal.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-}
-
-// =============================================================
-// Contact Form
-// =============================================================
-function initContactForm() {
-  const form = document.querySelector('.contact form, #contactForm');
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    showToast('success', 'Message sent! We\'ll get back to you within 24 hours.');
-    form.reset();
-  });
-}
-
-// =============================================================
-// Toast
-// =============================================================
-function showToast(type, message) {
-  const toast = document.getElementById('toast');
-  const msg = document.getElementById('toastMessage');
-  if (!toast || !msg) return;
-  toast.className = 'toast';
-  msg.textContent = message;
-  toast.classList.add(type, 'visible');
-  setTimeout(() => toast.classList.remove('visible'), 4500);
+  const isOpen = item.classList.toggle('open');
+  btn.setAttribute('aria-expanded', isOpen);
 }
 
 // =============================================================
 // Lazy Loading
 // =============================================================
 function initLazyLoading() {
+  const images = document.querySelectorAll('img[loading="lazy"]');
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const img = entry.target;
-          if (img.dataset.src) {
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-          }
+          if (img.dataset.src) { img.src = img.dataset.src; }
           observer.unobserve(img);
         }
       });
-    }, { rootMargin: '100px' });
-
-    document.querySelectorAll('img[data-src]').forEach(img => observer.observe(img));
+    });
+    images.forEach(img => observer.observe(img));
   }
 }
 
@@ -558,12 +507,11 @@ async function loadSiteSettings() {
     let link = document.querySelector("link[rel~='icon']");
     if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
     link.href = brand.favicon_url;
-    // Also update apple-touch-icon
     let apple = document.querySelector("link[rel='apple-touch-icon']");
     if (!apple) { apple = document.createElement('link'); apple.rel = 'apple-touch-icon'; document.head.appendChild(apple); }
     apple.href = brand.favicon_url;
   }
-  // Dynamic logo image (replace text logo with image if set)
+  // Dynamic logo image
   if (brand.logo_url) {
     const logoContainers = document.querySelectorAll('.logo');
     logoContainers.forEach(logo => {
@@ -574,7 +522,6 @@ async function loadSiteSettings() {
         img.alt = brand.name || 'Logo';
         img.className = 'logo-custom-img';
         img.style.cssText = 'height:32px;width:auto;object-fit:contain;';
-        // Hide the default logo icon + text, show image instead
         const iconEl = logo.querySelector('.logo-icon');
         const textEl = logo.querySelector('span:not(.logo-icon)');
         if (iconEl) iconEl.style.display = 'none';
@@ -590,7 +537,6 @@ async function loadSiteSettings() {
     let metaOgTitle = document.querySelector("meta[property='og:title']");
     if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); }
     metaOgTitle.content = seo.og_title;
-    // Also update page title if brand didn't set it
     if (!brand.name) document.title = seo.og_title;
   }
   if (seo.og_description) {
@@ -618,6 +564,8 @@ async function loadSiteSettings() {
   }
 }
 
+// --- Nav Links ---
+// DB table: nav_links | columns: label, href, is_cta
 async function loadNavLinks() {
   const { data } = await sb.from('nav_links').select('*').order('sort_order');
   if (!data || !data.length) return;
@@ -626,33 +574,71 @@ async function loadNavLinks() {
   nav.innerHTML = '';
   data.forEach(link => {
     const a = document.createElement('a');
-    a.href = link.url;
+    a.href = link.href || '#';
     a.textContent = link.label;
     a.className = link.is_cta ? 'nav-cta' : 'nav-link';
-    if (link.open_new_tab) a.target = '_blank';
     nav.appendChild(a);
   });
 }
 
+// --- Hero ---
+// DB table: hero_content | columns: badge_text, title_line1, title_highlight, description,
+//   btn_primary_text, btn_primary_link, btn_secondary_text, btn_secondary_link,
+//   hero_image_url, floating_card1_label, floating_card1_value, floating_card2_label, floating_card2_value
 async function loadHero() {
-  const { data } = await sb.from('hero').select('*').limit(1).single();
+  const { data } = await sb.from('hero_content').select('*').limit(1).single();
   if (!data) return;
-  if (data.title) setTextIfExists('heroTitle', data.title);
-  if (data.subtitle) setTextIfExists('heroDesc', data.subtitle);
+
+  // Title — combine title_line1 and title_highlight
+  const titleEl = document.getElementById('heroTitle');
+  if (titleEl && (data.title_line1 || data.title_highlight)) {
+    titleEl.innerHTML = `${data.title_line1 || ''} <br><span class="pink">${data.title_highlight || ''}</span>`;
+  }
+
+  if (data.description) setTextIfExists('heroDesc', data.description);
   if (data.badge_text) setTextIfExists('heroBadgeText', data.badge_text);
-  if (data.image_url) {
+
+  // Hero image
+  if (data.hero_image_url) {
     const img = document.getElementById('heroImage');
     const wrapper = document.getElementById('heroImageWrapper');
-    if (img) img.src = data.image_url;
+    if (img) img.src = data.hero_image_url;
     if (wrapper) wrapper.style.display = '';
   }
-  // Show floating cards if hero card data exists
+
+  // Buttons
+  if (data.btn_primary_text) {
+    const btn = document.getElementById('heroBtnPrimary');
+    if (btn) {
+      btn.querySelector('span').textContent = data.btn_primary_text;
+      if (data.btn_primary_link) btn.href = data.btn_primary_link;
+    }
+  }
+  if (data.btn_secondary_text) {
+    const btn = document.getElementById('heroBtnSecondary');
+    if (btn) {
+      btn.textContent = data.btn_secondary_text;
+      if (data.btn_secondary_link) btn.href = data.btn_secondary_link;
+    }
+  }
+
+  // Floating cards
   const card1 = document.getElementById('heroCard1');
   const card2 = document.getElementById('heroCard2');
-  if (card1 && data.card1_label) { card1.style.display = ''; setTextIfExists('heroCard1Label', data.card1_label); setTextIfExists('heroCard1Value', data.card1_value); }
-  if (card2 && data.card2_label) { card2.style.display = ''; setTextIfExists('heroCard2Label', data.card2_label); setTextIfExists('heroCard2Value', data.card2_value); }
+  if (card1 && data.floating_card1_label) {
+    card1.style.display = '';
+    setTextIfExists('heroCard1Label', data.floating_card1_label);
+    setTextIfExists('heroCard1Value', data.floating_card1_value);
+  }
+  if (card2 && data.floating_card2_label) {
+    card2.style.display = '';
+    setTextIfExists('heroCard2Label', data.floating_card2_label);
+    setTextIfExists('heroCard2Value', data.floating_card2_value);
+  }
 }
 
+// --- Stats ---
+// DB table: stats | columns: number, suffix, label, sort_order
 async function loadStats() {
   const { data } = await sb.from('stats').select('*').order('sort_order');
   if (!data || !data.length) return;
@@ -662,15 +648,21 @@ async function loadStats() {
   data.forEach(stat => {
     const item = document.createElement('div');
     item.className = 'stat-item';
-    item.innerHTML = `<span class="stat-number" data-count="${stat.count_value}">${stat.count_value}<span class="pink">${stat.suffix || ''}</span></span><span class="stat-label">${stat.label}</span>`;
+    item.innerHTML = `<span class="stat-number" data-count="${stat.number}">${stat.number}<span class="pink">${stat.suffix || ''}</span></span><span class="stat-label">${stat.label}</span>`;
     grid.appendChild(item);
   });
   showSection('statsBar');
 }
 
+// --- Services ---
+// DB table: services | columns: title, description, icon_svg
 async function loadServices() {
   const { data } = await sb.from('services').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  // Also load section header
+  await loadSectionHeader('services', 'servicesHeader');
+
   const grid = document.getElementById('servicesGrid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -678,7 +670,7 @@ async function loadServices() {
     const card = document.createElement('div');
     card.className = 'service-card reveal';
     card.innerHTML = `
-      <div class="service-icon">${svc.icon || ''}</div>
+      <div class="service-icon">${svc.icon_svg || ''}</div>
       <h3>${svc.title}</h3>
       <p>${svc.description}</p>
     `;
@@ -687,9 +679,14 @@ async function loadServices() {
   showSection('services');
 }
 
+// --- Process ---
+// DB table: process_steps | columns: step_number, title, description, icon_svg
 async function loadProcess() {
   const { data } = await sb.from('process_steps').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  await loadSectionHeader('process', 'processHeader');
+
   const timeline = document.getElementById('processTimeline');
   if (!timeline) return;
   timeline.innerHTML = '';
@@ -697,8 +694,8 @@ async function loadProcess() {
     const el = document.createElement('div');
     el.className = 'process-step reveal';
     el.innerHTML = `
-      <div class="process-icon">${step.icon || ''}</div>
-      <span class="process-number">${String(i + 1).padStart(2, '0')}</span>
+      <div class="process-icon">${step.icon_svg || ''}</div>
+      <span class="process-number">${String(step.step_number || i + 1).padStart(2, '0')}</span>
       <h3>${step.title}</h3>
       <p>${step.description}</p>
     `;
@@ -707,24 +704,25 @@ async function loadProcess() {
   showSection('process');
 }
 
+// --- Portfolio ---
+// DB table: projects | columns: title, description, tag, image_url, project_url, is_featured
 async function loadPortfolio() {
-  const { data } = await sb.from('portfolio').select('*').order('sort_order');
+  const { data } = await sb.from('projects').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  await loadSectionHeader('portfolio', 'workHeader');
+
   const grid = document.getElementById('workGrid');
   if (!grid) return;
   grid.innerHTML = '';
   data.forEach(project => {
     const card = document.createElement('div');
     card.className = 'work-card reveal';
-    if (project.tech_stack) card.setAttribute('data-tech', project.tech_stack);
-    if (project.live_url) card.setAttribute('data-live', project.live_url);
-    if (project.github_url) card.setAttribute('data-github', project.github_url);
-    if (project.details) card.setAttribute('data-details', project.details);
-    if (project.gallery_urls) card.setAttribute('data-gallery', project.gallery_urls);
+    if (project.project_url) card.setAttribute('data-live', project.project_url);
     card.innerHTML = `
       <div class="work-card-img"><img src="${project.image_url || ''}" alt="${project.title}" loading="lazy"></div>
       <div class="work-card-body">
-        <span class="work-card-tag">${project.category || ''}</span>
+        <span class="work-card-tag">${project.tag || ''}</span>
         <h3>${project.title}</h3>
         <p>${project.description}</p>
         <span class="work-card-expand">View Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
@@ -735,9 +733,14 @@ async function loadPortfolio() {
   showSection('work');
 }
 
+// --- Testimonials ---
+// DB table: testimonials | columns: client_name, client_role, client_company, client_initials, quote, rating
 async function loadTestimonials() {
   const { data } = await sb.from('testimonials').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  await loadSectionHeader('testimonials', 'testimonialsHeader');
+
   const track = document.getElementById('testimonialTrack');
   if (!track) return;
   track.innerHTML = '';
@@ -745,13 +748,13 @@ async function loadTestimonials() {
   data.forEach(t => {
     const card = document.createElement('div');
     card.className = 'testimonial-card';
-    const initials = (t.name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const initials = t.client_initials || (t.client_name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
     card.innerHTML = `
       <div class="testimonial-stars">${starSvg.repeat(t.rating || 5)}</div>
       <p class="testimonial-quote">"${t.quote}"</p>
       <div class="testimonial-author">
         <div class="testimonial-avatar">${initials}</div>
-        <div><div class="testimonial-name">${t.name}</div><div class="testimonial-role">${t.role || ''}</div></div>
+        <div><div class="testimonial-name">${t.client_name}</div><div class="testimonial-role">${t.client_role || ''}${t.client_company ? ' at ' + t.client_company : ''}</div></div>
       </div>
     `;
     track.appendChild(card);
@@ -759,9 +762,14 @@ async function loadTestimonials() {
   showSection('testimonials');
 }
 
+// --- Pricing ---
+// DB table: pricing_plans | columns: name, description, currency, price, period, features (JSONB array), is_popular, btn_text, btn_link
 async function loadPricing() {
-  const { data } = await sb.from('pricing').select('*').order('sort_order');
+  const { data } = await sb.from('pricing_plans').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  await loadSectionHeader('pricing', 'pricingHeader');
+
   const grid = document.getElementById('pricingGrid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -769,23 +777,29 @@ async function loadPricing() {
   data.forEach(plan => {
     const card = document.createElement('div');
     card.className = `pricing-card reveal${plan.is_popular ? ' popular' : ''}`;
-    const features = (plan.features || '').split('\n').filter(Boolean).map(f => `<li>${checkSvg} ${f.trim()}</li>`).join('');
+    // features is a JSONB array
+    const features = (Array.isArray(plan.features) ? plan.features : []).map(f => `<li>${checkSvg} ${f}</li>`).join('');
     card.innerHTML = `
       ${plan.is_popular ? '<span class="popular-badge">Most Popular</span>' : ''}
       <h3>${plan.name}</h3>
       <p class="pricing-desc">${plan.description || ''}</p>
       <div class="pricing-price"><span class="currency">${plan.currency || '₹'}</span><span class="amount">${plan.price}</span><span class="period">${plan.period || ''}</span></div>
       <ul class="pricing-features">${features}</ul>
-      <a href="${plan.cta_url || 'reachout.html'}" class="btn-primary pricing-btn">${plan.cta_text || 'Get Started'}</a>
+      <a href="${plan.btn_link || 'reachout.html'}" class="btn-primary pricing-btn">${plan.btn_text || 'Get Started'}</a>
     `;
     grid.appendChild(card);
   });
   showSection('pricing');
 }
 
+// --- FAQ ---
+// DB table: faq_items | columns: question, answer
 async function loadFAQ() {
-  const { data } = await sb.from('faq').select('*').order('sort_order');
+  const { data } = await sb.from('faq_items').select('*').order('sort_order');
   if (!data || !data.length) return;
+
+  await loadSectionHeader('faq', 'faqHeader');
+
   const list = document.getElementById('faqList');
   if (!list) return;
   list.innerHTML = '';
@@ -804,9 +818,8 @@ async function loadFAQ() {
   showSection('faq');
 }
 
+// --- Footer (social links) ---
 async function loadFooter() {
-  // Footer settings are now loaded from JSONB key-value in loadSiteSettings()
-  // This function exists for backwards compatibility and social links in footer
   try {
     const { data: socials } = await sb.from('social_links').select('*').order('sort_order');
     const container = document.getElementById('footerSocials');
@@ -815,9 +828,20 @@ async function loadFooter() {
         `<a href="${s.url}" target="_blank" rel="noopener" class="footer-social-link" title="${s.platform}">${s.icon_svg || s.platform}</a>`
       ).join('');
     }
+    // Also populate floating socials
+    const floating = document.getElementById('floatingSocials');
+    if (floating && socials) {
+      const floatingLinks = socials.filter(s => s.is_floating);
+      if (floatingLinks.length > 0) {
+        floating.innerHTML = floatingLinks.map(s =>
+          `<a href="${s.url}" target="_blank" rel="noopener" title="${s.platform}">${s.icon_svg || s.platform}</a>`
+        ).join('');
+      }
+    }
   } catch {}
 }
 
+// --- About ---
 async function loadAbout() {
   try {
     const { data } = await sb.from('about').select('*').limit(1).single();
@@ -827,9 +851,8 @@ async function loadAbout() {
     if (data.stats) {
       const container = document.getElementById('aboutStats');
       if (container && Array.isArray(data.stats)) {
-        // Render stats with data attributes for animation
         container.innerHTML = data.stats.map(s => {
-          const match = String(s.value).match(/^([^\d]*)([\d]+)([^\d]*)$/);
+          const match = String(s.value).match(/^([^\d]*)(\d+)([^\d]*)$/);
           if (match) {
             const prefix = match[1] || '';
             const target = parseInt(match[2], 10);
@@ -839,7 +862,6 @@ async function loadAbout() {
               <span class="about-stat-label">${s.label}</span>
             </div>`;
           } else {
-            // Fallback if there are no numbers (e.g. just text)
             return `<div class="about-stat"><span class="about-stat-number">${s.value}</span><span class="about-stat-label">${s.label}</span></div>`;
           }
         }).join('');
@@ -859,7 +881,6 @@ async function loadAbout() {
               const step = (timestamp) => {
                 if (!startTime) startTime = timestamp;
                 const progress = Math.min((timestamp - startTime) / duration, 1);
-                // EaseOut function for smooth deceleration
                 const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const current = Math.floor(ease * target);
                 
@@ -868,14 +889,14 @@ async function loadAbout() {
                 if (progress < 1) {
                   window.requestAnimationFrame(step);
                 } else {
-                  el.textContent = prefix + target + suffix; // Ensure final exact value
+                  el.textContent = prefix + target + suffix;
                 }
               };
               window.requestAnimationFrame(step);
               obs.unobserve(el);
             }
           });
-        }, { threshold: 0.3 }); // Trigger when 30% of the stat block is visible
+        }, { threshold: 0.3 });
 
         statEls.forEach(el => observer.observe(el));
       }
@@ -884,6 +905,7 @@ async function loadAbout() {
   } catch {}
 }
 
+// --- Team ---
 async function loadTeam() {
   try {
     const { data } = await sb.from('team_members').select('*').order('sort_order');
@@ -903,6 +925,23 @@ async function loadTeam() {
         </div>`;
     }).join('');
     showSection('about');
+  } catch {}
+}
+
+// --- Section Header Loader ---
+// Loads section_headers from DB and applies tag, title, subtitle to the page
+async function loadSectionHeader(sectionKey, containerId) {
+  try {
+    const { data } = await sb.from('section_headers').select('*').eq('section_key', sectionKey).single();
+    if (!data) return;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const tagEl = container.querySelector('.section-tag');
+    const titleEl = container.querySelector('h2');
+    const subtitleEl = container.querySelector('p');
+    if (tagEl && data.tag_text) tagEl.textContent = data.tag_text;
+    if (titleEl && data.title) titleEl.textContent = data.title;
+    if (subtitleEl && data.subtitle) subtitleEl.textContent = data.subtitle;
   } catch {}
 }
 
