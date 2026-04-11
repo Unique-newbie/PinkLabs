@@ -752,9 +752,57 @@ async function loadAbout() {
     if (data.stats) {
       const container = document.getElementById('aboutStats');
       if (container && Array.isArray(data.stats)) {
-        container.innerHTML = data.stats.map(s =>
-          `<div class="about-stat"><span class="about-stat-number">${s.value}</span><span class="about-stat-label">${s.label}</span></div>`
-        ).join('');
+        // Render stats with data attributes for animation
+        container.innerHTML = data.stats.map(s => {
+          const match = String(s.value).match(/^([^\d]*)([\d]+)([^\d]*)$/);
+          if (match) {
+            const prefix = match[1] || '';
+            const target = parseInt(match[2], 10);
+            const suffix = match[3] || '';
+            return `<div class="about-stat">
+              <span class="about-stat-number" data-target="${target}" data-prefix="${prefix}" data-suffix="${suffix}">${prefix}0${suffix}</span>
+              <span class="about-stat-label">${s.label}</span>
+            </div>`;
+          } else {
+            // Fallback if there are no numbers (e.g. just text)
+            return `<div class="about-stat"><span class="about-stat-number">${s.value}</span><span class="about-stat-label">${s.label}</span></div>`;
+          }
+        }).join('');
+
+        // Animate numbers counting up on scroll
+        const statEls = container.querySelectorAll('.about-stat-number[data-target]');
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const el = entry.target;
+              const target = parseInt(el.getAttribute('data-target'), 10);
+              const prefix = el.getAttribute('data-prefix');
+              const suffix = el.getAttribute('data-suffix');
+              const duration = 2000;
+              let startTime = null;
+
+              const step = (timestamp) => {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                // EaseOut function for smooth deceleration
+                const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                const current = Math.floor(ease * target);
+                
+                el.textContent = prefix + current + suffix;
+                
+                if (progress < 1) {
+                  window.requestAnimationFrame(step);
+                } else {
+                  el.textContent = prefix + target + suffix; // Ensure final exact value
+                }
+              };
+              window.requestAnimationFrame(step);
+              obs.unobserve(el);
+            }
+          });
+        }, { threshold: 0.3 }); // Trigger when 30% of the stat block is visible
+
+        statEls.forEach(el => observer.observe(el));
       }
     }
     showSection('about');
