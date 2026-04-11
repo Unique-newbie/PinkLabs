@@ -908,33 +908,76 @@ async function renderSettings(area) {
   const seo = seoData ? (typeof seoData.value === 'string' ? JSON.parse(seoData.value) : seoData.value) : {};
 
   area.innerHTML = `
+    <!-- Branding & Identity -->
     <div class="section-panel">
-      <div class="section-panel-header"><h3>Brand</h3></div>
+      <div class="section-panel-header"><h3>Branding & Identity</h3></div>
       <div class="section-panel-body">
         <div class="field-row">
           <div class="field"><label>Brand Name</label><input type="text" id="setBrandName" value="${esc(brand.name)}"></div>
           <div class="field"><label>Tagline</label><input type="text" id="setBrandTagline" value="${esc(brand.tagline)}"></div>
         </div>
         <div class="field"><label>Description</label><textarea id="setBrandDesc">${esc(brand.description)}</textarea></div>
-        <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSettingsGroup('brand')">Save Brand</button>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Favicon URL <span class="hint">(browser tab icon — 32×32 or 64×64 PNG)</span></label>
+            <div class="image-upload-group">
+              <input type="text" id="setBrandFavicon" value="${esc(brand.favicon_url)}" placeholder="https://...favicon.png">
+              <label class="upload-btn" for="upload_favicon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload
+              </label>
+              <input type="file" id="upload_favicon" accept="image/png,image/x-icon,image/svg+xml" style="display:none" onchange="handleImageUpload(event, 'setBrandFavicon')">
+            </div>
+            ${brand.favicon_url ? `<img src="${esc(brand.favicon_url)}" class="image-preview" style="max-width:48px;max-height:48px;margin-top:8px" alt="favicon preview">` : ''}
+          </div>
+          <div class="field">
+            <label>Logo Image URL <span class="hint">(optional — replaces text logo)</span></label>
+            <div class="image-upload-group">
+              <input type="text" id="setBrandLogo" value="${esc(brand.logo_url)}" placeholder="https://...logo.png">
+              <label class="upload-btn" for="upload_logo">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload
+              </label>
+              <input type="file" id="upload_logo" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'setBrandLogo')">
+            </div>
+            ${brand.logo_url ? `<img src="${esc(brand.logo_url)}" class="image-preview" style="max-height:40px;margin-top:8px" alt="logo preview">` : ''}
+          </div>
+        </div>
+
+        <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSettingsGroup('brand')">Save Brand & Identity</button>
       </div>
     </div>
 
+    <!-- Footer -->
     <div class="section-panel">
       <div class="section-panel-header"><h3>Footer</h3></div>
       <div class="section-panel-body">
         <div class="field"><label>Copyright Text</label><input type="text" id="setFooterCopy" value="${esc(footer.copyright)}"></div>
+        <div class="field"><label>Footer Description</label><input type="text" id="setFooterDesc" value="${esc(footer.description)}"></div>
         <div class="field"><label>Built With Text</label><input type="text" id="setFooterBuilt" value="${esc(footer.built_with)}"></div>
         <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSettingsGroup('footer')">Save Footer</button>
       </div>
     </div>
 
+    <!-- SEO / Open Graph -->
     <div class="section-panel">
       <div class="section-panel-header"><h3>SEO / Open Graph</h3></div>
       <div class="section-panel-body">
-        <div class="field"><label>OG Title</label><input type="text" id="setSeoTitle" value="${esc(seo.og_title)}"></div>
-        <div class="field"><label>OG Description</label><textarea id="setSeoDesc">${esc(seo.og_description)}</textarea></div>
-        <div class="field"><label>OG Image URL</label><input type="url" id="setSeoImage" value="${esc(seo.og_image)}"></div>
+        <div class="field"><label>Meta Title <span class="hint">(browser tab & search engine title)</span></label><input type="text" id="setSeoTitle" value="${esc(seo.og_title)}"></div>
+        <div class="field"><label>Meta Description <span class="hint">(search engine snippet)</span></label><textarea id="setSeoDesc">${esc(seo.og_description)}</textarea></div>
+        <div class="field">
+          <label>OG Image URL <span class="hint">(social sharing image — 1200×630 recommended)</span></label>
+          <div class="image-upload-group">
+            <input type="text" id="setSeoImage" value="${esc(seo.og_image)}" placeholder="https://...og-image.png">
+            <label class="upload-btn" for="upload_og">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload
+            </label>
+            <input type="file" id="upload_og" accept="image/*" style="display:none" onchange="handleImageUpload(event, 'setSeoImage')">
+          </div>
+          ${seo.og_image ? `<img src="${esc(seo.og_image)}" class="image-preview" style="max-width:300px;margin-top:8px" alt="og preview">` : ''}
+        </div>
         <button class="btn btn-pink btn-sm" style="margin-top:8px" onclick="saveSettingsGroup('seo')">Save SEO</button>
       </div>
     </div>
@@ -950,11 +993,14 @@ async function saveSettingsGroup(key) {
       val.name = document.getElementById('setBrandName').value;
       val.tagline = document.getElementById('setBrandTagline').value;
       val.description = document.getElementById('setBrandDesc').value;
+      val.favicon_url = document.getElementById('setBrandFavicon').value;
+      val.logo_url = document.getElementById('setBrandLogo').value;
       break;
     }
     case 'footer':
       val = {
         copyright: document.getElementById('setFooterCopy').value,
+        description: document.getElementById('setFooterDesc').value,
         built_with: document.getElementById('setFooterBuilt').value,
       };
       break;
@@ -967,7 +1013,11 @@ async function saveSettingsGroup(key) {
       break;
   }
 
-  const { error } = await sb.from('site_settings').update({ value: val }).eq('key', key);
+  // Use upsert so settings auto-create if missing
+  const { error } = await sb.from('site_settings').upsert(
+    { key, value: val },
+    { onConflict: 'key' }
+  );
   if (error) { showToast(error.message, 'error'); return; }
   showToast(`${key} settings saved!`, 'success');
 }

@@ -535,16 +535,86 @@ async function loadAllContent() {
 }
 
 async function loadSiteSettings() {
-  const { data } = await sb.from('site_settings').select('*').limit(1).single();
-  if (!data) return;
-  const title = data.site_name || 'PinkLabs';
-  document.title = `${title} — Web Development Agency`;
-  const navBrand = document.getElementById('brandNameNav');
-  const footBrand = document.getElementById('brandNameFooter');
-  if (navBrand) navBrand.textContent = title;
-  if (footBrand) footBrand.textContent = title;
-  if (data.meta_description) {
-    document.querySelector('meta[name="description"]')?.setAttribute('content', data.meta_description);
+  const { data } = await sb.from('site_settings').select('*');
+  if (!data || data.length === 0) return;
+
+  // Build a key→value map
+  const settings = {};
+  data.forEach(row => {
+    settings[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+  });
+
+  // --- Brand ---
+  const brand = settings.brand || {};
+  if (brand.name) {
+    document.title = `${brand.name} — ${brand.tagline || 'Web Development Agency'}`;
+    const navBrand = document.getElementById('brandNameNav');
+    const footBrand = document.getElementById('brandNameFooter');
+    if (navBrand) navBrand.textContent = brand.name;
+    if (footBrand) footBrand.textContent = brand.name;
+  }
+  // Dynamic favicon
+  if (brand.favicon_url) {
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.href = brand.favicon_url;
+    // Also update apple-touch-icon
+    let apple = document.querySelector("link[rel='apple-touch-icon']");
+    if (!apple) { apple = document.createElement('link'); apple.rel = 'apple-touch-icon'; document.head.appendChild(apple); }
+    apple.href = brand.favicon_url;
+  }
+  // Dynamic logo image (replace text logo with image if set)
+  if (brand.logo_url) {
+    const logoContainers = document.querySelectorAll('.logo');
+    logoContainers.forEach(logo => {
+      const existingImg = logo.querySelector('.logo-custom-img');
+      if (!existingImg) {
+        const img = document.createElement('img');
+        img.src = brand.logo_url;
+        img.alt = brand.name || 'Logo';
+        img.className = 'logo-custom-img';
+        img.style.cssText = 'height:32px;width:auto;object-fit:contain;';
+        // Hide the default logo icon + text, show image instead
+        const iconEl = logo.querySelector('.logo-icon');
+        const textEl = logo.querySelector('span:not(.logo-icon)');
+        if (iconEl) iconEl.style.display = 'none';
+        if (textEl) textEl.style.display = 'none';
+        logo.prepend(img);
+      }
+    });
+  }
+
+  // --- SEO / Open Graph ---
+  const seo = settings.seo || {};
+  if (seo.og_title) {
+    let metaOgTitle = document.querySelector("meta[property='og:title']");
+    if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); }
+    metaOgTitle.content = seo.og_title;
+    // Also update page title if brand didn't set it
+    if (!brand.name) document.title = seo.og_title;
+  }
+  if (seo.og_description) {
+    let metaDesc = document.querySelector("meta[name='description']");
+    if (metaDesc) metaDesc.content = seo.og_description;
+    let metaOgDesc = document.querySelector("meta[property='og:description']");
+    if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); }
+    metaOgDesc.content = seo.og_description;
+  }
+  if (seo.og_image) {
+    let metaOgImage = document.querySelector("meta[property='og:image']");
+    if (!metaOgImage) { metaOgImage = document.createElement('meta'); metaOgImage.setAttribute('property', 'og:image'); document.head.appendChild(metaOgImage); }
+    metaOgImage.content = seo.og_image;
+  }
+
+  // --- Footer ---
+  const footer = settings.footer || {};
+  if (footer.copyright) {
+    const el = document.getElementById('footerCopyright');
+    if (el) el.textContent = footer.copyright;
+  }
+  if (footer.description) {
+    const el = document.getElementById('footerDesc');
+    if (el) el.textContent = footer.description;
   }
 }
 
@@ -735,11 +805,16 @@ async function loadFAQ() {
 }
 
 async function loadFooter() {
+  // Footer settings are now loaded from JSONB key-value in loadSiteSettings()
+  // This function exists for backwards compatibility and social links in footer
   try {
-    const { data } = await sb.from('site_settings').select('*').limit(1).single();
-    if (!data) return;
-    if (data.footer_description) setTextIfExists('footerDesc', data.footer_description);
-    if (data.copyright_text) setTextIfExists('footerCopyright', data.copyright_text);
+    const { data: socials } = await sb.from('social_links').select('*').order('sort_order');
+    const container = document.getElementById('footerSocials');
+    if (container && socials && socials.length > 0) {
+      container.innerHTML = socials.map(s =>
+        `<a href="${s.url}" target="_blank" rel="noopener" class="footer-social-link" title="${s.platform}">${s.icon_svg || s.platform}</a>`
+      ).join('');
+    }
   } catch {}
 }
 
