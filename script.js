@@ -549,13 +549,20 @@ async function loadNavLinks() {
 async function loadHero() {
   const { data } = await sb.from('hero').select('*').limit(1).single();
   if (!data) return;
-  setTextIfExists('heroTitle', data.title);
-  setTextIfExists('heroDesc', data.subtitle);
-  setTextIfExists('heroBadgeText', data.badge_text);
+  if (data.title) setTextIfExists('heroTitle', data.title);
+  if (data.subtitle) setTextIfExists('heroDesc', data.subtitle);
+  if (data.badge_text) setTextIfExists('heroBadgeText', data.badge_text);
   if (data.image_url) {
     const img = document.getElementById('heroImage');
+    const wrapper = document.getElementById('heroImageWrapper');
     if (img) img.src = data.image_url;
+    if (wrapper) wrapper.style.display = '';
   }
+  // Show floating cards if hero card data exists
+  const card1 = document.getElementById('heroCard1');
+  const card2 = document.getElementById('heroCard2');
+  if (card1 && data.card1_label) { card1.style.display = ''; setTextIfExists('heroCard1Label', data.card1_label); setTextIfExists('heroCard1Value', data.card1_value); }
+  if (card2 && data.card2_label) { card2.style.display = ''; setTextIfExists('heroCard2Label', data.card2_label); setTextIfExists('heroCard2Value', data.card2_value); }
 }
 
 async function loadStats() {
@@ -570,6 +577,7 @@ async function loadStats() {
     item.innerHTML = `<span class="stat-number" data-count="${stat.count_value}">${stat.count_value}<span class="pink">${stat.suffix || ''}</span></span><span class="stat-label">${stat.label}</span>`;
     grid.appendChild(item);
   });
+  showSection('statsBar');
 }
 
 async function loadServices() {
@@ -588,6 +596,7 @@ async function loadServices() {
     `;
     grid.appendChild(card);
   });
+  showSection('services');
 }
 
 async function loadProcess() {
@@ -607,6 +616,7 @@ async function loadProcess() {
     `;
     timeline.appendChild(el);
   });
+  showSection('process');
 }
 
 async function loadPortfolio() {
@@ -634,6 +644,7 @@ async function loadPortfolio() {
     `;
     grid.appendChild(card);
   });
+  showSection('work');
 }
 
 async function loadTestimonials() {
@@ -657,6 +668,7 @@ async function loadTestimonials() {
     `;
     track.appendChild(card);
   });
+  showSection('testimonials');
 }
 
 async function loadPricing() {
@@ -680,6 +692,7 @@ async function loadPricing() {
     `;
     grid.appendChild(card);
   });
+  showSection('pricing');
 }
 
 async function loadFAQ() {
@@ -700,6 +713,7 @@ async function loadFAQ() {
     `;
     list.appendChild(item);
   });
+  showSection('faq');
 }
 
 async function loadFooter() {
@@ -718,4 +732,9 @@ function setTextIfExists(id, text) {
   if (!text) return;
   const el = document.getElementById(id);
   if (el) el.textContent = text;
+}
+
+function showSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = '';
 }

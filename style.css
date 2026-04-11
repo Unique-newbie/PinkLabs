@@ -661,36 +661,92 @@ button { font-family: var(--font-primary); }
 /* ======================== */
 .reachout-hero {
   min-height: 100vh; display: flex; align-items: center;
-  justify-content: center; padding: 120px 24px 60px;
-  background: var(--bg-dark); position: relative;
+  justify-content: center; padding: 120px 24px 80px;
+  background: var(--bg-dark); position: relative; overflow: hidden;
 }
+.reachout-hero-bg,
 .reachout-hero::before {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(233,30,99,0.1), transparent 60%),
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(233,30,99,0.12), transparent 60%),
               radial-gradient(ellipse at 70% 80%, rgba(255,64,129,0.08), transparent 60%);
 }
 .reachout-container {
   position: relative; z-index: 1; width: 100%; max-width: 1100px;
-  display: grid; grid-template-columns: 1fr 1.1fr; gap: 60px; align-items: center;
+  display: grid; grid-template-columns: 1fr 1.1fr; gap: 60px; align-items: start;
 }
-.reachout-info h1 { font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: var(--text-white); line-height: 1.1; margin-bottom: 20px; }
-.reachout-info > p { font-size: 1.1rem; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 40px; }
-.reachout-details { display: flex; flex-direction: column; gap: 24px; }
+.reachout-info .section-tag { color: var(--pink-light); margin-bottom: 12px; }
+.reachout-info .section-tag::before, .reachout-info .section-tag::after { background: var(--pink-light); }
+.reachout-info h1 { font-family: var(--font-display); font-size: 3rem; font-weight: 900; color: var(--text-white); line-height: 1.1; margin-bottom: 16px; }
+.reachout-subtitle { font-size: 1.05rem; color: rgba(255,255,255,0.55); line-height: 1.7; margin-bottom: 36px; }
+.reachout-details { display: flex; flex-direction: column; gap: 20px; margin-bottom: 36px; }
 .reachout-detail { display: flex; align-items: flex-start; gap: 16px; }
 .reachout-detail-icon {
   width: 48px; height: 48px; min-width: 48px;
   background: rgba(233,30,99,0.1); border: 1px solid rgba(233,30,99,0.15);
   border-radius: var(--radius-md); display: flex; align-items: center;
   justify-content: center; color: var(--pink-light);
+  transition: var(--transition-base);
 }
-.reachout-detail h4 { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
-.reachout-detail p, .reachout-detail a { font-size: 0.95rem; color: rgba(255,255,255,0.5); }
+.reachout-detail:hover .reachout-detail-icon {
+  background: var(--pink-gradient); color: #fff; transform: translateY(-2px);
+  box-shadow: var(--shadow-pink);
+}
+.reachout-detail h4 { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 4px; }
+.reachout-detail p, .reachout-detail a { font-size: 0.95rem; color: rgba(255,255,255,0.5); text-decoration: none; }
 .reachout-detail a:hover { color: var(--pink-light); }
+
+/* Trust Signals */
+.reachout-trust {
+  display: flex; gap: 20px; flex-wrap: wrap; padding-top: 8px;
+}
+.trust-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.82rem; font-weight: 500; color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-pill); padding: 8px 16px;
+}
+
+/* Form Card */
 .reachout-form-card {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius-lg); padding: 40px; backdrop-filter: blur(10px);
 }
-.reachout-form-card h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--text-white); margin-bottom: 28px; }
+.form-card-header { margin-bottom: 28px; }
+.form-card-header h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--text-white); margin-bottom: 8px; }
+.form-card-header p { font-size: 0.9rem; color: rgba(255,255,255,0.45); }
+.reachout-form-card label { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; display: block; }
+.reachout-form-card input,
+.reachout-form-card select,
+.reachout-form-card textarea {
+  width: 100%; padding: 14px 16px; border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: #fff; font-family: var(--font-primary); font-size: 0.95rem;
+  transition: var(--transition-fast); outline: none;
+}
+.reachout-form-card input::placeholder,
+.reachout-form-card textarea::placeholder { color: rgba(255,255,255,0.3); }
+.reachout-form-card select { cursor: pointer; }
+.reachout-form-card select option { background: #1a1a1a; color: #fff; }
+.reachout-form-card input:focus,
+.reachout-form-card select:focus,
+.reachout-form-card textarea:focus {
+  border-color: var(--pink-primary); background: rgba(233,30,99,0.06);
+  box-shadow: 0 0 0 3px rgba(233,30,99,0.1);
+}
+.reachout-form-card input.error,
+.reachout-form-card select.error,
+.reachout-form-card textarea.error { border-color: #ef4444; }
+.reachout-form-card input.success,
+.reachout-form-card select.success,
+.reachout-form-card textarea.success { border-color: #22c55e; }
+.form-error { color: #ef4444; font-size: 0.78rem; margin-top: 4px; display: block; min-height: 18px; }
+.form-group { margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.submit-btn {
+  width: 100%; margin-top: 8px; padding: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
 
 /* ======================== */
 /* Keyframes                */
