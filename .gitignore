@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment / Config (uncomment if you want to keep keys out of git)
+# config.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output
+dist/
+build/
