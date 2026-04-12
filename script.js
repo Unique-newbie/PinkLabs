@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initContactForm();
   initProjectModal();
   initLazyLoading();
+
+  // Re-init Lucide icons after dynamic content is rendered
+  if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch(e) {} }
 });
 
 // =============================================================

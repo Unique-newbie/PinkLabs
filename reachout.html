@@ -11,26 +11,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap">
-  <link rel="stylesheet" href="style.css?v=2.0">
+  <link rel="stylesheet" href="style.css?v=2.1">
   <script>const t=localStorage.getItem('pinklabs-theme');if(t)document.documentElement.setAttribute('data-theme',t);else if(matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.setAttribute('data-theme','dark');</script>
 </head>
 <body>
 
   <!-- Navbar -->
-  <header class="navbar scrolled" id="navbar" role="navigation">
+  <header class="navbar" id="navbar" role="navigation">
     <div class="container navbar-inner">
       <a href="/" class="logo"><span class="logo-icon">P</span><span>PinkLabs</span></a>
       <nav class="nav-links" id="navLinks">
-        <a href="/" class="nav-link">Home</a>
         <a href="services.html" class="nav-link">Services</a>
         <a href="portfolio.html" class="nav-link">Work</a>
         <a href="about.html" class="nav-link">About</a>
-        <a href="reachout.html" class="nav-cta">Reach Out</a>
+        <a href="/#pricing" class="nav-link">Pricing</a>
+        <a href="reachout.html" class="nav-cta active"><i data-lucide="send" class="lucide-sm"></i> Reach Out</a>
       </nav>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <i data-lucide="sun" class="icon-sun"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
         </button>
         <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
           <span></span><span></span><span></span>
@@ -175,46 +175,44 @@
   </main>
 
   <!-- GLOBAL FOOTER (same as index.html) -->
-  <footer class="footer" role="contentinfo">
+  <footer class="footer" id="footer">
     <div class="container">
-      <div class="footer-grid">
+      <div class="footer-grid" id="footerGrid">
         <div class="footer-brand">
-          <a href="/" class="logo"><span class="logo-icon">P</span><span>PinkLabs</span></a>
-          <p>Crafting premium digital experiences that drive growth and captivate users worldwide.</p>
+          <a href="/" class="logo"><span class="logo-icon">P</span><span id="brandNameFooter">PinkLabs</span></a>
+          <p id="footerDesc">Crafting premium digital experiences that drive growth and captivate users worldwide.</p>
           <div class="social-links" id="footerSocials"></div>
         </div>
         <div class="footer-col">
           <h4>Services</h4>
-          <a href="/#services">Web Development</a>
-          <a href="/#services">App Development</a>
-          <a href="/#services">UI/UX Design</a>
-          <a href="/#services">Digital Strategy</a>
+          <a href="services.html"><i data-lucide="code-2" class="lucide-xs"></i> Web Development</a>
+          <a href="services.html"><i data-lucide="smartphone" class="lucide-xs"></i> App Development</a>
+          <a href="services.html"><i data-lucide="palette" class="lucide-xs"></i> UI/UX Design</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="/#work">Portfolio</a>
-          <a href="/#pricing">Pricing</a>
-          <a href="/#faq">FAQ</a>
-          <a href="reachout.html">Contact</a>
+          <a href="portfolio.html"><i data-lucide="folder-open" class="lucide-xs"></i> Portfolio</a>
+          <a href="about.html"><i data-lucide="users" class="lucide-xs"></i> About</a>
+          <a href="reachout.html"><i data-lucide="mail" class="lucide-xs"></i> Contact</a>
         </div>
         <div class="footer-col">
-          <h4>Connect</h4>
-          <a href="reachout.html">Reach Out</a>
-          <a href="/#testimonials">Testimonials</a>
+          <h4>Legal</h4>
+          <a href="privacy.html"><i data-lucide="shield" class="lucide-xs"></i> Privacy Policy</a>
         </div>
       </div>
       <div class="footer-bottom">
         <p id="footerCopyright">&copy; 2026 PinkLabs. All rights reserved.</p>
-        <p id="footerBuiltWith">Built with <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--pink-primary)" stroke="var(--pink-primary)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> by PinkLabs</p>
+        <p>Built with <i data-lucide="heart" class="lucide-heart"></i> by PinkLabs</p>
       </div>
     </div>
   </footer>
 
-  <button class="back-to-top" id="backToTop" aria-label="Back to top"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+  <button class="back-to-top" id="backToTop" aria-label="Back to top"><i data-lucide="chevron-up"></i></button>
   <div class="toast" id="toast" role="alert"><span id="toastMessage"></span></div>
 
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=2.0"></script>
+  <script src="config.js?v=2.1"></script>
   <script>
     // ============================================
     // Reach Out Page Script
@@ -379,5 +377,6 @@
       setTimeout(() => toast.classList.remove('visible'), 4500);
     }
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

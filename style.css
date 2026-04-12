@@ -93,6 +93,36 @@ button { font-family: var(--font-primary); }
 *:focus-visible { outline: 2px solid var(--pink-primary); outline-offset: 3px; border-radius: 4px; }
 
 /* ======================== */
+/* Lucide Icon Utilities    */
+/* ======================== */
+.lucide-sm { width: 16px; height: 16px; display: inline-block; vertical-align: -2px; }
+.lucide-xs { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; opacity: 0.6; }
+.lucide-heart { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; color: var(--pink-primary); fill: var(--pink-primary); }
+.section-tag .lucide-sm { opacity: 0.7; margin-right: 2px; }
+.nav-cta .lucide-sm { margin-right: 2px; }
+.footer-col a .lucide-xs { margin-right: 4px; transition: var(--transition-fast); }
+.footer-col a:hover .lucide-xs { opacity: 1; color: var(--pink-primary); }
+
+/* ======================== */
+/* Section Alt Background   */
+/* ======================== */
+.section-alt { background: var(--bg-secondary); }
+
+/* ======================== */
+/* CTA Section (unified)    */
+/* ======================== */
+.cta-section { text-align: center; }
+.cta-content { max-width: 600px; margin: 0 auto; }
+.cta-icon {
+  width: 48px; height: 48px; display: block; margin: 0 auto 20px;
+  color: var(--pink-primary); opacity: 0.8;
+}
+.cta-desc {
+  color: var(--text-secondary); max-width: 540px; margin: 0 auto 32px;
+  font-size: 1.1rem; line-height: 1.7;
+}
+.cta-content .btn-primary .lucide-sm { margin-right: 4px; }
+/* ======================== */
 /* Skip Nav                 */
 /* ======================== */
 .skip-nav {
@@ -149,6 +179,7 @@ button { font-family: var(--font-primary); }
 }
 .nav-link:hover, .nav-link.active { color: var(--pink-primary); background: var(--pink-glow); }
 .nav-cta {
+  display: inline-flex; align-items: center; gap: 4px;
   background: var(--text-primary); color: var(--bg-primary);
   padding: 10px 22px; border-radius: var(--radius-pill);
   font-size: 0.85rem; font-weight: 600; transition: var(--transition-base);
