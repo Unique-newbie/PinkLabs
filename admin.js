@@ -403,6 +403,7 @@ async function saveSectionHeader(sectionKey, id) {
     tag_text: document.getElementById('sh_tag').value,
     title: document.getElementById('sh_title').value,
     subtitle: document.getElementById('sh_subtitle').value,
+    updated_at: new Date().toISOString(),
   };
 
   let error;
@@ -635,6 +636,7 @@ async function saveAbout(existingId) {
     title: document.getElementById('aboutTitle').value,
     description: document.getElementById('aboutDesc').value,
     stats,
+    updated_at: new Date().toISOString(),
   };
 
   let error;

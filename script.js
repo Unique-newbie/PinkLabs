@@ -435,8 +435,13 @@ function initProjectModal() {
 // =============================================================
 function toggleFaq(btn) {
   const item = btn.parentElement;
-  const isOpen = item.classList.toggle('open');
+  const answer = item.querySelector('.faq-answer');
+  const isOpen = item.classList.toggle('active');
+  item.classList.toggle('open', isOpen);
   btn.setAttribute('aria-expanded', isOpen);
+  if (answer) {
+    answer.style.maxHeight = isOpen ? answer.scrollHeight + 'px' : '0';
+  }
 }
 
 // =============================================================
@@ -630,11 +635,17 @@ async function loadHero() {
   // Hero image — show/hide based on whether URL exists
   const img = document.getElementById('heroImage');
   const wrapper = document.getElementById('heroImageWrapper');
+  const visual = wrapper?.closest('.hero-visual');
   if (data.hero_image_url) {
     if (img) img.src = data.hero_image_url;
     if (wrapper) wrapper.style.display = '';
+    if (visual) visual.style.display = '';
   } else {
     if (wrapper) wrapper.style.display = 'none';
+    // Hide the entire visual container to prevent empty space
+    if (visual && !data.floating_card1_label && !data.floating_card2_label) {
+      visual.style.display = 'none';
+    }
   }
 
   // Buttons — always apply text + link
@@ -882,10 +893,13 @@ async function loadFooter() {
 // --- About ---
 async function loadAbout() {
   try {
-    const { data } = await sb.from('about').select('*').limit(1).single();
-    if (!data) return;
-    if (data.title) setTextIfExists('aboutTitle', data.title);
-    if (data.description) setTextIfExists('aboutDesc', data.description);
+    const { data, error } = await sb.from('about').select('*').limit(1).single();
+    if (error || !data) return;
+    // Always apply title and description (even empty clears the default)
+    const titleEl = document.getElementById('aboutTitle');
+    if (titleEl && data.title !== null && data.title !== undefined) titleEl.textContent = data.title;
+    const descEl = document.getElementById('aboutDesc');
+    if (descEl && data.description !== null && data.description !== undefined) descEl.textContent = data.description;
     if (data.stats) {
       const container = document.getElementById('aboutStats');
       if (container && Array.isArray(data.stats)) {
@@ -977,9 +991,10 @@ async function loadSectionHeader(sectionKey, containerId) {
     const tagEl = container.querySelector('.section-tag');
     const titleEl = container.querySelector('h2');
     const subtitleEl = container.querySelector('p');
-    if (tagEl && data.tag_text) tagEl.textContent = data.tag_text;
-    if (titleEl && data.title) titleEl.textContent = data.title;
-    if (subtitleEl && data.subtitle) subtitleEl.textContent = data.subtitle;
+    // Always apply values (even empty strings) so admin changes sync immediately
+    if (tagEl && data.tag_text !== null && data.tag_text !== undefined) tagEl.textContent = data.tag_text;
+    if (titleEl && data.title !== null && data.title !== undefined) titleEl.textContent = data.title;
+    if (subtitleEl && data.subtitle !== null && data.subtitle !== undefined) subtitleEl.textContent = data.subtitle;
   } catch {}
 }
 
@@ -1052,12 +1067,21 @@ async function loadFormConfig() {
 // Helpers
 // =============================================================
 function setTextIfExists(id, text) {
-  if (!text) return;
+  if (text === null || text === undefined) return;
   const el = document.getElementById(id);
   if (el) el.textContent = text;
 }
 
 function showSection(id) {
   const el = document.getElementById(id);
-  if (el) el.style.display = '';
+  if (el) {
+    el.style.display = '';
+    // Re-trigger reveal animations for dynamically loaded cards inside this section
+    // Without this, .reveal elements would stay invisible if the section was display:none
+    requestAnimationFrame(() => {
+      el.querySelectorAll('.reveal:not(.revealed)').forEach(card => {
+        card.classList.add('revealed');
+      });
+    });
+  }
 }

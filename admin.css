@@ -686,13 +686,59 @@ label .hint { display: inline; }
   .field-row { grid-template-columns: 1fr; }
   .admin-grid { grid-template-columns: 1fr 1fr; }
   .topbar { padding: 14px 18px; }
+  .topbar-title { font-size: 1rem; }
   .content-area { padding: 18px; }
   .user-email { display: none; }
   .login-card { padding: 36px 28px; }
   .sidebar-tooltip { display: none !important; }
+  .admin-modal { max-width: 95vw; max-height: 90vh; }
+  .admin-modal-body { padding: 18px; }
+  .admin-modal-footer { padding: 14px 18px; }
+  .section-panel-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .section-panel-header .btn { align-self: flex-start; }
+  .section-panel-body { padding: 18px; }
+  .item-row { flex-wrap: wrap; padding: 12px 14px; }
+  .item-row .item-actions { width: 100%; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--admin-border); margin-top: 8px; }
+  .admin-table-wrap { margin: 0 -18px; padding: 0 18px; }
+  .admin-table { font-size: 0.82rem; }
+  .admin-table th, .admin-table td { padding: 10px 12px; }
+  .view-site-btn span { display: none; }
+  .image-upload-group { flex-direction: column; }
+  .image-upload-group .upload-btn { align-self: flex-start; }
+  .image-preview { max-width: 150px; }
 }
 
 @media (max-width: 480px) {
   .admin-grid { grid-template-columns: 1fr; }
-  .content-area { padding: 16px; }
+  .content-area { padding: 14px; }
+  .topbar { padding: 12px 14px; }
+  .topbar-title { font-size: 0.95rem; }
+  .login-card { padding: 32px 20px; max-width: 100%; }
+  .login-card h1 { font-size: 1.4rem; }
+  .login-logo { width: 52px; height: 52px; border-radius: 12px; }
+  .login-logo span { font-size: 1.4rem; }
+  .login-field input { padding: 12px 14px; font-size: 0.9rem; }
+  .login-btn { padding: 12px; font-size: 0.9rem; }
+  .admin-stat-card { padding: 18px; }
+  .admin-stat-card .value { font-size: 1.8rem; }
+  .admin-stat-card .label { font-size: 0.72rem; }
+  .section-panel-header { padding: 16px 14px; }
+  .section-panel-body { padding: 14px; }
+  .field label { font-size: 0.75rem; }
+  .field input, .field select, .field textarea { padding: 10px 12px; font-size: 0.85rem; }
+  .btn { padding: 8px 14px; font-size: 0.8rem; }
+  .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+  .admin-modal { border-radius: 12px; }
+  .admin-modal-header { padding: 16px 18px; }
+  .admin-modal-header h3 { font-size: 1rem; }
+  .admin-toast { bottom: 14px; right: 14px; left: 14px; font-size: 0.85rem; padding: 12px 16px; }
+  .item-row .item-title { font-size: 0.88rem; }
+  .item-row .item-sub { font-size: 0.75rem; }
+}
+
+@media (max-width: 360px) {
+  .login-card { padding: 28px 16px; }
+  .login-field label { font-size: 0.72rem; }
+  .sidebar-header { padding: 18px 20px; font-size: 1.05rem; }
+  .sidebar-link { font-size: 0.82rem; padding: 9px 12px; }
 }
