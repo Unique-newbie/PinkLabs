@@ -5,6 +5,73 @@
 
 let sb = null;
 
+function getCurrentPath() {
+  const rawPath = window.location.pathname || '/';
+  const normalized = rawPath.endsWith('/') && rawPath.length > 1 ? rawPath.slice(0, -1) : rawPath;
+  return normalized || '/';
+}
+
+function isHomePage() {
+  const path = getCurrentPath();
+  return path === '/' || path.endsWith('/index.html');
+}
+
+function normalizeInternalHref(href) {
+  if (!href) return '#';
+  if (/^(https?:|mailto:|tel:|#)/i.test(href)) return href;
+  if (!href.startsWith('/')) return href;
+
+  const [pathPart, hashPart] = href.split('#');
+  const hash = hashPart ? `#${hashPart}` : '';
+  if (pathPart === '/') return `index.html${hash}`;
+
+  const trimmedPath = pathPart.replace(/^\//, '');
+  if (!trimmedPath) return `index.html${hash}`;
+  if (trimmedPath.includes('.')) return `${trimmedPath}${hash}`;
+  return `${trimmedPath}.html${hash}`;
+}
+
+function resolveSiteHref(href) {
+  if (!href) return '#';
+  if (/^(https?:|mailto:|tel:)/i.test(href)) return href;
+  if (href.startsWith('/')) return normalizeInternalHref(href);
+  if (!href.startsWith('#')) return href;
+  if (isHomePage()) return href;
+
+  const section = href.slice(1).toLowerCase();
+  const routeMap = {
+    home: 'index.html#home',
+    services: 'services.html',
+    process: 'services.html#processPage',
+    work: 'portfolio.html',
+    portfolio: 'portfolio.html',
+    pricing: 'index.html#pricing',
+    team: 'about.html#teamSection',
+    about: 'about.html',
+    faq: 'index.html#faq',
+    contact: 'reachout.html',
+    reachout: 'reachout.html',
+  };
+
+  return routeMap[section] || `index.html${href}`;
+}
+
+function isCurrentNavTarget(href) {
+  if (!href || href === '#') return false;
+  const normalizedHref = resolveSiteHref(href);
+  const currentPath = getCurrentPath();
+  const [hrefPath, hrefHash] = normalizedHref.split('#');
+
+  if (!hrefPath || hrefPath === 'index.html') {
+    if (!hrefHash) return isHomePage() && (!window.location.hash || window.location.hash === '#pricing');
+    return isHomePage() && window.location.hash === `#${hrefHash}`;
+  }
+
+  const currentFile = currentPath === '/' ? 'index.html' : currentPath.split('/').pop();
+  const hrefFile = hrefPath.split('/').pop();
+  return currentFile === hrefFile;
+}
+
 // HTML escaping to prevent XSS from DB content
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
@@ -24,6 +91,8 @@ function initSupabase() {
   }
   return false;
 }
+
+let contactSubmitLockedUntil = 0;
 
 // =============================================================
 // Init
@@ -59,8 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initScrollSpy();
   initAnimatedCounters();
   initTestimonialCarousel();
-  initContactForm();
+  initContactForms();
   initProjectModal();
+  initTeamInteractions();
   initLazyLoading();
 
   // Re-init Lucide icons after dynamic content is rendered
@@ -381,56 +451,9 @@ function initTestimonialCarousel() {
 // =============================================================
 // Contact Form
 // =============================================================
-function initContactForm() {
-  const form = document.getElementById('contactForm');
-  if (!form || !sb) return;
-  let lastSubmitTime = 0;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Rate limiting: 30s between submissions
-    const now = Date.now();
-    if (now - lastSubmitTime < 30000) {
-      showContactToast('Please wait before submitting again.', 'error');
-      return;
-    }
-
-    const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-
-    const email = form.querySelector('[name="email"]')?.value || '';
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      btn.disabled = false;
-      btn.textContent = 'Send Message';
-      showContactToast('Please enter a valid email address.', 'error');
-      return;
-    }
-
-    const payload = {
-      name: form.querySelector('[name="name"]')?.value || '',
-      email,
-      phone: form.querySelector('[name="phone"]')?.value || '',
-      project_type: form.querySelector('[name="project_type"]')?.value || '',
-      budget: form.querySelector('[name="budget"]')?.value || '',
-      message: form.querySelector('[name="message"]')?.value || '',
-    };
-
-    const { error } = await sb.from('contact_submissions').insert([payload]);
-    btn.disabled = false;
-    if (error) {
-      btn.textContent = 'Send Message';
-      showContactToast('Something went wrong. Please try again.', 'error');
-    } else {
-      lastSubmitTime = now;
-      btn.textContent = 'Message Sent!';
-      form.reset();
-      showContactToast('Thanks! We\'ll get back to you soon.', 'success');
-      setTimeout(() => { btn.textContent = 'Send Message'; }, 3000);
-    }
-  });
+function initContactForms() {
+  initLegacyContactForm();
+  initReachoutForm();
 }
 
 function showContactToast(msg, type) {
@@ -440,6 +463,173 @@ function showContactToast(msg, type) {
   message.textContent = msg;
   toast.className = `toast ${type} visible`;
   setTimeout(() => toast.classList.remove('visible'), 4000);
+}
+
+function setButtonLoadingState(button, loading) {
+  if (!button) return;
+  const btnText = button.querySelector('.btn-text');
+  const btnLoading = button.querySelector('.btn-loading');
+  const btnArrow = button.querySelector('.btn-arrow');
+
+  button.disabled = loading;
+
+  if (btnText || btnLoading || btnArrow) {
+    if (btnText) btnText.style.display = loading ? 'none' : 'inline';
+    if (btnLoading) btnLoading.style.display = loading ? 'inline-flex' : 'none';
+    if (btnArrow) btnArrow.style.display = loading ? 'none' : 'inline';
+    return;
+  }
+
+  if (loading) {
+    button.dataset.originalText = button.textContent;
+    button.textContent = 'Sending...';
+  } else if (button.dataset.originalText) {
+    button.textContent = button.dataset.originalText;
+  }
+}
+
+async function submitContactPayload(payload) {
+  const now = Date.now();
+  if (now < contactSubmitLockedUntil) {
+    showContactToast('Please wait before submitting again.', 'error');
+    return { ok: false, rateLimited: true };
+  }
+
+  const { error } = await sb.from('contact_submissions').insert([payload]);
+  if (error) throw error;
+
+  contactSubmitLockedUntil = now + 30000;
+  return { ok: true };
+}
+
+function initLegacyContactForm() {
+  const form = document.getElementById('contactForm');
+  if (!form || !sb || form.dataset.bound === 'true') return;
+  form.dataset.bound = 'true';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = form.querySelector('button[type="submit"]');
+    const email = form.querySelector('[name="email"]')?.value?.trim() || '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showContactToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    const payload = {
+      name: form.querySelector('[name="name"]')?.value?.trim() || '',
+      email,
+      phone: form.querySelector('[name="phone"]')?.value?.trim() || '',
+      project_type: form.querySelector('[name="project_type"]')?.value || '',
+      budget: form.querySelector('[name="budget"]')?.value || '',
+      message: form.querySelector('[name="message"]')?.value?.trim() || '',
+    };
+
+    setButtonLoadingState(btn, true);
+    try {
+      const result = await submitContactPayload(payload);
+      if (!result.ok) return;
+      form.reset();
+      showContactToast('Thanks! We\'ll get back to you soon.', 'success');
+    } catch (error) {
+      console.error(error);
+      showContactToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setButtonLoadingState(btn, false);
+    }
+  });
+}
+
+function initReachoutForm() {
+  const form = document.getElementById('reachoutForm');
+  if (!form || !sb || form.dataset.bound === 'true') return;
+  form.dataset.bound = 'true';
+
+  const submitBtn = document.getElementById('roSubmitBtn');
+  const fields = {
+    name: { el: document.getElementById('roName'), err: document.getElementById('roNameError') },
+    email: { el: document.getElementById('roEmail'), err: document.getElementById('roEmailError') },
+    project: { el: document.getElementById('roProject'), err: document.getElementById('roProjectError') },
+    message: { el: document.getElementById('roMessage'), err: document.getElementById('roMessageError') },
+  };
+
+  function validate(key) {
+    const field = fields[key];
+    if (!field?.el || !field?.err) return true;
+
+    const rawValue = field.el.value || '';
+    const value = rawValue.trim();
+    let ok = true;
+    let msg = '';
+
+    switch (key) {
+      case 'name':
+        if (!value) { ok = false; msg = 'Name is required'; }
+        else if (value.length < 2) { ok = false; msg = 'Min 2 characters'; }
+        break;
+      case 'email':
+        if (!value) { ok = false; msg = 'Email is required'; }
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { ok = false; msg = 'Invalid email'; }
+        break;
+      case 'project':
+        if (!field.el.value) { ok = false; msg = 'Select a project type'; }
+        break;
+      case 'message':
+        if (!value) { ok = false; msg = 'Message is required'; }
+        else if (value.length < 10) { ok = false; msg = 'Min 10 characters'; }
+        break;
+      default:
+        break;
+    }
+
+    field.err.textContent = msg;
+    field.el.classList.toggle('error', !ok);
+    field.el.classList.toggle('success', ok && Boolean(value || field.el.value));
+    return ok;
+  }
+
+  Object.keys(fields).forEach((key) => {
+    const field = fields[key];
+    if (!field?.el) return;
+    field.el.addEventListener('blur', () => validate(key));
+    field.el.addEventListener('input', () => {
+      if (field.el.classList.contains('error')) validate(key);
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const allValid = Object.keys(fields).every((key) => validate(key));
+    if (!allValid) return;
+
+    const payload = {
+      name: fields.name.el.value.trim(),
+      email: fields.email.el.value.trim(),
+      phone: document.getElementById('roPhone')?.value.trim() || null,
+      project_type: fields.project.el.value,
+      budget: document.getElementById('roBudget')?.value || null,
+      message: fields.message.el.value.trim(),
+    };
+
+    setButtonLoadingState(submitBtn, true);
+    try {
+      const result = await submitContactPayload(payload);
+      if (!result.ok) return;
+      showContactToast('Message sent! We\'ll get back to you within 24 hours.', 'success');
+      form.reset();
+      Object.values(fields).forEach(({ el, err }) => {
+        if (el) el.classList.remove('success', 'error');
+        if (err) err.textContent = '';
+      });
+    } catch (error) {
+      console.error(error);
+      showContactToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setButtonLoadingState(submitBtn, false);
+    }
+  });
 }
 
 // =============================================================
@@ -559,28 +749,30 @@ function initLazyLoading() {
 // Content Loader — Supabase
 // =============================================================
 async function loadAllContent() {
-  try {
-    await Promise.all([
-      loadSiteSettings(),
-      loadNavLinks(),
-      loadHero(),
-      loadStats(),
-      loadBrands(),
-      loadServices(),
-      loadProcess(),
-      loadPortfolio(),
-      loadTestimonials(),
-      loadPricing(),
-      loadFAQ(),
-      loadAbout(),
-      loadTeam(),
-      loadFooter(),
-      loadContactInfo(),
-      loadFormConfig(),
-    ]);
-  } catch (err) {
-    console.warn('[PinkLabs] Content load error:', err);
-  }
+  const results = await Promise.allSettled([
+    loadSiteSettings(),
+    loadNavLinks(),
+    loadHero(),
+    loadStats(),
+    loadBrands(),
+    loadServices(),
+    loadProcess(),
+    loadPortfolio(),
+    loadTestimonials(),
+    loadPricing(),
+    loadFAQ(),
+    loadAbout(),
+    loadTeam(),
+    loadFooter(),
+    loadContactInfo(),
+    loadFormConfig(),
+  ]);
+
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.warn('[PinkLabs] Content load error:', result.reason);
+    }
+  });
 }
 
 async function loadSiteSettings() {
@@ -596,7 +788,6 @@ async function loadSiteSettings() {
   // --- Brand ---
   const brand = settings.brand || {};
   if (brand.name) {
-    document.title = `${brand.name} — ${brand.tagline || 'Web Development Agency'}`;
     const navBrand = document.getElementById('brandNameNav');
     const footBrand = document.getElementById('brandNameFooter');
     if (navBrand) navBrand.textContent = brand.name;
@@ -633,15 +824,15 @@ async function loadSiteSettings() {
 
   // --- SEO / Open Graph ---
   const seo = settings.seo || {};
-  if (seo.og_title) {
+  if (seo.og_title && isHomePage()) {
     let metaOgTitle = document.querySelector("meta[property='og:title']");
     if (!metaOgTitle) { metaOgTitle = document.createElement('meta'); metaOgTitle.setAttribute('property', 'og:title'); document.head.appendChild(metaOgTitle); }
     metaOgTitle.content = seo.og_title;
-    if (!brand.name) document.title = seo.og_title;
+    document.title = seo.og_title;
   }
   if (seo.og_description) {
     let metaDesc = document.querySelector("meta[name='description']");
-    if (metaDesc) metaDesc.content = seo.og_description;
+    if (metaDesc && isHomePage()) metaDesc.content = seo.og_description;
     let metaOgDesc = document.querySelector("meta[property='og:description']");
     if (!metaOgDesc) { metaOgDesc = document.createElement('meta'); metaOgDesc.setAttribute('property', 'og:description'); document.head.appendChild(metaOgDesc); }
     metaOgDesc.content = seo.og_description;
@@ -688,9 +879,14 @@ async function loadNavLinks() {
   nav.innerHTML = '';
   data.forEach(link => {
     const a = document.createElement('a');
-    a.href = link.href || '#';
+    const href = resolveSiteHref(link.href || '#');
+    a.href = href;
     a.textContent = link.label;
     a.className = link.is_cta ? 'nav-cta' : 'nav-link';
+    if (isCurrentNavTarget(link.href || href)) {
+      a.classList.add('active');
+      a.setAttribute('aria-current', 'page');
+    }
     nav.appendChild(a);
   });
 }
@@ -850,7 +1046,7 @@ async function loadProcess() {
 
   await loadSectionHeader('process', 'processHeader');
 
-  const timeline = document.getElementById('processTimeline');
+  const timeline = document.getElementById('processTimeline') || document.getElementById('processSteps');
   if (!timeline) return;
   timeline.innerHTML = '';
   data.forEach((step, i) => {
@@ -865,6 +1061,7 @@ async function loadProcess() {
     timeline.appendChild(el);
   });
   showSection('process');
+  showSection('processPage');
 }
 
 // --- Portfolio ---
@@ -1078,22 +1275,105 @@ async function loadTeam() {
   try {
     const { data } = await sb.from('team_members').select('*').order('sort_order');
     if (!data || !data.length) return;
+    await loadSectionHeader('team', 'teamHeader');
     const grid = document.getElementById('teamGrid');
     if (!grid) return;
-    grid.innerHTML = data.map(m => {
-      const avatar = m.avatar_url
-        ? `<img src="${m.avatar_url}" alt="${m.name}" loading="lazy">`
-        : `<span class="team-avatar-placeholder">${(m.name || '?').charAt(0).toUpperCase()}</span>`;
-      return `
-        <div class="team-card">
-          <div class="team-avatar">${avatar}</div>
-          <h4>${m.name}</h4>
-          <p class="team-role">${m.role || ''}</p>
-          ${m.bio ? `<p class="team-bio">${m.bio}</p>` : ''}
-        </div>`;
-    }).join('');
+    const founderMembers = data.filter((member) => /founder/i.test(member.role || ''));
+    const nonFounderMembers = data.filter((member) => !/founder/i.test(member.role || ''));
+    const rows = [];
+
+    if (founderMembers.length > 0) {
+      rows.push({ className: 'team-row team-row-founders', tier: 'founder', members: founderMembers });
+    }
+
+    const rowSizes = [3, 4];
+    let cursor = 0;
+    let rowIndex = 0;
+    while (cursor < nonFounderMembers.length) {
+      const size = rowSizes[Math.min(rowIndex, rowSizes.length - 1)];
+      const members = nonFounderMembers.slice(cursor, cursor + size);
+      rows.push({
+        className: `team-row team-row-depth-${rowIndex + 1}`,
+        tier: rowIndex === 0 ? 'lead' : 'member',
+        members,
+      });
+      cursor += size;
+      rowIndex += 1;
+    }
+
+    grid.innerHTML = `
+      <div class="team-pyramid">
+        ${rows.map((row, rowNumber) => `
+          <div class="${row.className} team-row-size-${row.members.length}" data-row="${rowNumber + 1}">
+            ${row.members.map((member, memberIndex) => renderTeamCard(member, row.tier, rowNumber, memberIndex)).join('')}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    initTeamInteractions();
     showSection('about');
   } catch {}
+}
+
+function renderTeamCard(member, tier, rowIndex, memberIndex) {
+  const safeName = escapeHtml(member.name || 'Team Member');
+  const safeRole = escapeHtml(member.role || '');
+  const safeBio = escapeHtml(member.bio || 'Profile details coming soon.');
+  const avatar = member.avatar_url
+    ? `<img src="${escapeHtml(member.avatar_url)}" alt="${safeName}" loading="lazy">`
+    : `<span class="team-avatar-placeholder">${safeName.charAt(0).toUpperCase()}</span>`;
+  const cardId = `team-card-${rowIndex}-${memberIndex}`;
+
+  return `
+    <article class="team-card team-card-${tier} reveal" tabindex="0" role="button" aria-expanded="false" aria-controls="${cardId}">
+      <div class="team-card-shell">
+        <div class="team-card-summary">
+          <span class="team-tier">${tier === 'founder' ? 'Founder' : tier === 'lead' ? 'Leadership' : 'Team'}</span>
+          <div class="team-avatar">${avatar}</div>
+          <h4>${safeName}</h4>
+          <p class="team-role">${safeRole}</p>
+        </div>
+        <div class="team-card-details" id="${cardId}">
+          <p class="team-bio">${safeBio}</p>
+        </div>
+        <span class="team-card-toggle">Click to ${member.bio ? 'read more' : 'view profile'}</span>
+      </div>
+    </article>
+  `;
+}
+
+function initTeamInteractions() {
+  const cards = document.querySelectorAll('.team-card');
+  cards.forEach((card) => {
+    if (card.dataset.bound === 'true') return;
+    card.dataset.bound = 'true';
+
+    const details = card.querySelector('.team-card-details');
+    const toggleCard = () => {
+      const nextState = !card.classList.contains('active');
+      cards.forEach((otherCard) => {
+        if (otherCard === card) return;
+        otherCard.classList.remove('active');
+        otherCard.setAttribute('aria-expanded', 'false');
+        const otherDetails = otherCard.querySelector('.team-card-details');
+        if (otherDetails) otherDetails.style.maxHeight = '0px';
+      });
+
+      card.classList.toggle('active', nextState);
+      card.setAttribute('aria-expanded', String(nextState));
+      if (details) {
+        details.style.maxHeight = nextState ? `${details.scrollHeight}px` : '0px';
+      }
+    };
+
+    card.addEventListener('click', toggleCard);
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleCard();
+      }
+    });
+  });
 }
 
 // --- Section Header Loader ---

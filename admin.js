@@ -160,7 +160,7 @@ async function loadSection(section) {
       case 'process': await renderCrudList(area, 'process_steps', ['step_number', 'title', 'description', 'icon_svg']); break;
       case 'portfolio': await renderCrudList(area, 'projects', ['title', 'description', 'tag', 'image_url', 'project_url', 'is_featured']); break;
       case 'testimonials': await renderCrudList(area, 'testimonials', ['client_name', 'client_role', 'client_company', 'client_initials', 'quote', 'rating']); break;
-      case 'team': await renderCrudList(area, 'team_members', ['name', 'role', 'bio', 'avatar_url']); break;
+      case 'team': await renderCrudList(area, 'team_members', ['name', 'role', 'sort_order', 'bio', 'avatar_url']); break;
       case 'about': await renderAboutEditor(area); break;
       case 'pricing': await renderPricingEditor(area); break;
       case 'faq': await renderCrudList(area, 'faq_items', ['question', 'answer']); break;
@@ -438,6 +438,7 @@ async function openCrudModal(table, fields, itemId) {
 
   // Context-aware hints for each field so admins know what to enter
   const fieldHints = {
+    sort_order: 'Controls the visual order on the site — lower numbers appear higher in the pyramid',
     icon_svg: 'Paste SVG markup for the icon — e.g. from heroicons.com or lucide.dev',
     step_number: 'Step number (e.g. "01", "02") — shown before the step title',
     tag: 'Category label shown on the portfolio card — e.g. "Web App", "E-Commerce"',
@@ -451,7 +452,7 @@ async function openCrudModal(table, fields, itemId) {
     quote: 'The client\'s testimonial text — keep it concise and impactful',
     rating: 'Star rating from 1 to 5 — shown as gold stars',
     avatar_url: 'Profile photo of the team member — upload or paste URL',
-    bio: 'Brief bio or description — 1-2 sentences recommended',
+    bio: 'Shown inside the expanded team card on the public site — use 1-3 short paragraphs',
     href: 'Link URL — e.g. "#services", "/about.html", or "https://..."',
     is_cta: 'Mark this as the highlighted Call-to-Action button in the navbar',
     platform: 'Social media platform name — e.g. "Twitter", "LinkedIn", "Instagram"',
