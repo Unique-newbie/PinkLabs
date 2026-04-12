@@ -5,6 +5,12 @@
 
 let sb = null;
 
+// HTML escaping to prevent XSS from DB content
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function initSupabase() {
   const url = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_URL : 'YOUR_SUPABASE_URL';
   const key = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_ANON_KEY : 'YOUR_SUPABASE_ANON_KEY';
@@ -122,17 +128,37 @@ function initMobileMenu() {
   const toggle = document.getElementById('menuToggle');
   const nav = document.getElementById('navLinks');
   if (!toggle || !nav) return;
+
+  // Create backdrop overlay for mobile menu
+  let backdrop = document.getElementById('navBackdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'navBackdrop';
+    backdrop.className = 'nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  function openMenu() {
+    nav.classList.add('open');
+    toggle.classList.add('active');
+    backdrop.classList.add('active');
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMenu() {
+    nav.classList.remove('open');
+    toggle.classList.remove('active');
+    backdrop.classList.remove('active');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
   toggle.addEventListener('click', () => {
-    const isOpen = nav.classList.toggle('open');
-    toggle.classList.toggle('open', isOpen);
-    toggle.setAttribute('aria-expanded', isOpen);
+    nav.classList.contains('open') ? closeMenu() : openMenu();
   });
+  backdrop.addEventListener('click', closeMenu);
   nav.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      nav.classList.remove('open');
-      toggle.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
-    });
+    link.addEventListener('click', closeMenu);
   });
 }
 
@@ -235,13 +261,17 @@ function initAnimatedCounters() {
       if (entry.isIntersecting) {
         const el = entry.target;
         const target = parseInt(el.dataset.count, 10);
-        const suffix = el.dataset.suffix || '';
+        // Preserve the suffix span inside the stat-number
+        const suffixSpan = el.querySelector('.pink');
+        const suffixText = suffixSpan ? suffixSpan.textContent : '';
         const duration = 2000;
         let start = 0;
         const step = (timestamp) => {
           if (!start) start = timestamp;
           const progress = Math.min((timestamp - start) / duration, 1);
-          el.textContent = Math.floor(progress * target) + suffix;
+          const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+          const current = Math.floor(ease * target);
+          el.innerHTML = `${current}<span class="pink">${escapeHtml(suffixText)}</span>`;
           if (progress < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
@@ -262,11 +292,13 @@ function initTestimonialCarousel() {
   const dots = document.getElementById('testimonialDots');
   if (!track || !prev || !next) return;
   let idx = 0;
+  let autoplay = null;
 
   function update() {
     const cards = track.querySelectorAll('.testimonial-card');
     if (!cards.length) return;
-    const width = cards[0].offsetWidth + 24;
+    const gap = 28;
+    const width = cards[0].offsetWidth + gap;
     track.style.transform = `translateX(-${idx * width}px)`;
     if (dots) {
       dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
@@ -280,30 +312,54 @@ function initTestimonialCarousel() {
     cards.forEach((_, i) => {
       const dot = document.createElement('button');
       dot.className = `dot${i === 0 ? ' active' : ''}`;
+      dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
       dot.addEventListener('click', () => { idx = i; update(); });
       dots.appendChild(dot);
     });
   }
 
-  prev.addEventListener('click', () => {
-    const cards = track.querySelectorAll('.testimonial-card');
-    if (!cards.length) return;
-    idx = (idx - 1 + cards.length) % cards.length;
-    update();
-  });
-  next.addEventListener('click', () => {
+  function goNext() {
     const cards = track.querySelectorAll('.testimonial-card');
     if (!cards.length) return;
     idx = (idx + 1) % cards.length;
     update();
-  });
-
-  setTimeout(() => { buildDots(); update(); }, 100);
-  let autoplay = setInterval(() => {
+  }
+  function goPrev() {
     const cards = track.querySelectorAll('.testimonial-card');
-    if (cards.length) { idx = (idx + 1) % cards.length; update(); }
-  }, 5000);
-  track.addEventListener('mouseenter', () => clearInterval(autoplay));
+    if (!cards.length) return;
+    idx = (idx - 1 + cards.length) % cards.length;
+    update();
+  }
+
+  prev.addEventListener('click', goPrev);
+  next.addEventListener('click', goNext);
+
+  // Autoplay with pause on hover and resume on leave
+  function startAutoplay() {
+    stopAutoplay();
+    autoplay = setInterval(goNext, 5000);
+  }
+  function stopAutoplay() {
+    if (autoplay) { clearInterval(autoplay); autoplay = null; }
+  }
+  track.addEventListener('mouseenter', stopAutoplay);
+  track.addEventListener('mouseleave', startAutoplay);
+
+  // Touch swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+  track.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    stopAutoplay();
+  }, { passive: true });
+  track.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) { diff > 0 ? goNext() : goPrev(); }
+    startAutoplay();
+  }, { passive: true });
+
+  setTimeout(() => { buildDots(); update(); startAutoplay(); }, 100);
 }
 
 // =============================================================
@@ -312,15 +368,34 @@ function initTestimonialCarousel() {
 function initContactForm() {
   const form = document.getElementById('contactForm');
   if (!form || !sb) return;
+  let lastSubmitTime = 0;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Rate limiting: 30s between submissions
+    const now = Date.now();
+    if (now - lastSubmitTime < 30000) {
+      showContactToast('Please wait before submitting again.', 'error');
+      return;
+    }
+
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Sending...';
 
+    const email = form.querySelector('[name="email"]')?.value || '';
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      btn.disabled = false;
+      btn.textContent = 'Send Message';
+      showContactToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
     const payload = {
       name: form.querySelector('[name="name"]')?.value || '',
-      email: form.querySelector('[name="email"]')?.value || '',
+      email,
       phone: form.querySelector('[name="phone"]')?.value || '',
       project_type: form.querySelector('[name="project_type"]')?.value || '',
       budget: form.querySelector('[name="budget"]')?.value || '',
@@ -333,6 +408,7 @@ function initContactForm() {
       btn.textContent = 'Send Message';
       showContactToast('Something went wrong. Please try again.', 'error');
     } else {
+      lastSubmitTime = now;
       btn.textContent = 'Message Sent!';
       form.reset();
       showContactToast('Thanks! We\'ll get back to you soon.', 'success');
@@ -720,8 +796,8 @@ async function loadServices() {
     card.className = 'service-card reveal';
     card.innerHTML = `
       <div class="service-icon">${svc.icon_svg || ''}</div>
-      <h3>${svc.title}</h3>
-      <p>${svc.description}</p>
+      <h3>${escapeHtml(svc.title)}</h3>
+      <p>${escapeHtml(svc.description)}</p>
     `;
     grid.appendChild(card);
   });
@@ -745,8 +821,8 @@ async function loadProcess() {
     el.innerHTML = `
       <div class="process-icon">${step.icon_svg || ''}</div>
       <span class="process-number">${String(step.step_number || i + 1).padStart(2, '0')}</span>
-      <h3>${step.title}</h3>
-      <p>${step.description}</p>
+      <h3>${escapeHtml(step.title)}</h3>
+      <p>${escapeHtml(step.description)}</p>
     `;
     timeline.appendChild(el);
   });
@@ -769,11 +845,11 @@ async function loadPortfolio() {
     card.className = 'work-card reveal';
     if (project.project_url) card.setAttribute('data-live', project.project_url);
     card.innerHTML = `
-      <div class="work-card-img"><img src="${project.image_url || ''}" alt="${project.title}" loading="lazy"></div>
+      <div class="work-card-img"><img src="${escapeHtml(project.image_url || '')}" alt="${escapeHtml(project.title)}" loading="lazy"></div>
       <div class="work-card-body">
-        <span class="work-card-tag">${project.tag || ''}</span>
-        <h3>${project.title}</h3>
-        <p>${project.description}</p>
+        <span class="work-card-tag">${escapeHtml(project.tag || '')}</span>
+        <h3>${escapeHtml(project.title)}</h3>
+        <p>${escapeHtml(project.description)}</p>
         <span class="work-card-expand">View Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
     `;
@@ -797,13 +873,13 @@ async function loadTestimonials() {
   data.forEach(t => {
     const card = document.createElement('div');
     card.className = 'testimonial-card';
-    const initials = t.client_initials || (t.client_name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const initials = escapeHtml(t.client_initials || (t.client_name || '').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase());
     card.innerHTML = `
-      <div class="testimonial-stars">${starSvg.repeat(t.rating || 5)}</div>
-      <p class="testimonial-quote">"${t.quote}"</p>
+      <div class="testimonial-stars">${starSvg.repeat(Math.min(Math.max(t.rating || 5, 1), 5))}</div>
+      <p class="testimonial-quote">"${escapeHtml(t.quote)}"</p>
       <div class="testimonial-author">
         <div class="testimonial-avatar">${initials}</div>
-        <div><div class="testimonial-name">${t.client_name}</div><div class="testimonial-role">${t.client_role || ''}${t.client_company ? ' at ' + t.client_company : ''}</div></div>
+        <div><div class="testimonial-name">${escapeHtml(t.client_name)}</div><div class="testimonial-role">${escapeHtml(t.client_role || '')}${t.client_company ? ' at ' + escapeHtml(t.client_company) : ''}</div></div>
       </div>
     `;
     track.appendChild(card);
@@ -826,15 +902,15 @@ async function loadPricing() {
   data.forEach(plan => {
     const card = document.createElement('div');
     card.className = `pricing-card reveal${plan.is_popular ? ' popular' : ''}`;
-    // features is a JSONB array
-    const features = (Array.isArray(plan.features) ? plan.features : []).map(f => `<li>${checkSvg} ${f}</li>`).join('');
+    // features is a JSONB array — escape each item
+    const features = (Array.isArray(plan.features) ? plan.features : []).map(f => `<li>${checkSvg} ${escapeHtml(f)}</li>`).join('');
     card.innerHTML = `
       ${plan.is_popular ? '<span class="popular-badge">Most Popular</span>' : ''}
-      <h3>${plan.name}</h3>
-      <p class="pricing-desc">${plan.description || ''}</p>
-      <div class="pricing-price"><span class="currency">${plan.currency || '₹'}</span><span class="amount">${plan.price}</span><span class="period">${plan.period || ''}</span></div>
+      <h3>${escapeHtml(plan.name)}</h3>
+      <p class="pricing-desc">${escapeHtml(plan.description || '')}</p>
+      <div class="pricing-price"><span class="currency">${escapeHtml(plan.currency || '₹')}</span><span class="amount">${escapeHtml(plan.price)}</span><span class="period">${escapeHtml(plan.period || '')}</span></div>
       <ul class="pricing-features">${features}</ul>
-      <a href="${plan.btn_link || 'reachout.html'}" class="btn-primary pricing-btn">${plan.btn_text || 'Get Started'}</a>
+      <a href="${escapeHtml(plan.btn_link || 'reachout.html')}" class="btn-primary pricing-btn">${escapeHtml(plan.btn_text || 'Get Started')}</a>
     `;
     grid.appendChild(card);
   });
@@ -856,12 +932,14 @@ async function loadFAQ() {
     const item = document.createElement('div');
     item.className = 'faq-item';
     item.innerHTML = `
-      <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
-        ${faq.question}
+      <button class="faq-question" aria-expanded="false">
+        ${escapeHtml(faq.question)}
         <span class="faq-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
       </button>
-      <div class="faq-answer"><p>${faq.answer}</p></div>
+      <div class="faq-answer"><p>${escapeHtml(faq.answer)}</p></div>
     `;
+    // Event delegation instead of onclick
+    item.querySelector('.faq-question').addEventListener('click', function() { toggleFaq(this); });
     list.appendChild(item);
   });
   showSection('faq');
