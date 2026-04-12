@@ -142,7 +142,7 @@ async function loadSection(section) {
   currentSection = section;
   const area = document.getElementById('contentArea');
   const titleMap = {
-    dashboard: 'Dashboard', hero: 'Hero Section', brands: 'Trusted Brands', services: 'Services', process: 'Process Steps',
+    dashboard: 'Dashboard', hero: 'Hero Section', stats: 'Hero Stats', brands: 'Trusted Brands', services: 'Services', process: 'Process Steps',
     portfolio: 'Portfolio Projects', testimonials: 'Testimonials', team: 'Team Members',
     about: 'About Section', pricing: 'Pricing Plans', faq: 'FAQ', 'contact-info': 'Contact & Social',
     submissions: 'Submissions', settings: 'Site Settings', navbar: 'Navigation'
@@ -155,7 +155,8 @@ async function loadSection(section) {
     switch (section) {
       case 'dashboard': await renderDashboard(area); break;
       case 'hero': await renderHeroEditor(area); break;
-      case 'brands': await renderCrudList(area, 'trust_logos', ['name', 'sort_order']); break;
+      case 'stats': await renderCrudList(area, 'stats', ['number', 'suffix', 'label', 'sort_order']); break;
+      case 'brands': await renderCrudList(area, 'trust_logos', ['name', 'logo_url', 'sort_order']); break;
       case 'services': await renderCrudList(area, 'services', ['title', 'description', 'icon_svg']); break;
       case 'process': await renderCrudList(area, 'process_steps', ['step_number', 'title', 'description', 'icon_svg']); break;
       case 'portfolio': await renderCrudList(area, 'projects', ['title', 'description', 'tag', 'image_url', 'project_url', 'is_featured']); break;
@@ -434,7 +435,7 @@ async function openCrudModal(table, fields, itemId) {
 
   const fieldsArr = typeof fields === 'string' ? JSON.parse(fields.replace(/'/g, '"')) : fields;
 
-  const isImageField = (f) => f.endsWith('_url') && (f.includes('image') || f.includes('avatar'));
+  const isImageField = (f) => f.endsWith('_url') && (f.includes('image') || f.includes('avatar') || f.includes('logo'));
 
   // Context-aware hints for each field so admins know what to enter
   const fieldHints = {
@@ -458,6 +459,9 @@ async function openCrudModal(table, fields, itemId) {
     platform: 'Social media platform name — e.g. "Twitter", "LinkedIn", "Instagram"',
     url: 'Full URL to the social profile — e.g. "https://twitter.com/pinklabs"',
     is_floating: 'Show as floating icon on the side of the page',
+    logo_url: 'URL of the logo image for the brand',
+    suffix: 'Text after the number (e.g. "+", "%", "k")',
+    number: 'The primary statistic value (e.g. 50, 100, 24)',
   };
 
   const formHtml = fieldsArr.map(f => {

@@ -273,16 +273,23 @@ button { font-family: var(--font-primary); }
 .hero-image-wrapper { position: relative; border-radius: var(--radius-lg); overflow: hidden; }
 .hero-image { width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); }
 .hero-floating-card {
-  position: absolute; background: var(--pink); color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: absolute; background: var(--bg-card); color: var(--text-primary);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-md); padding: 16px 20px;
-  box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3); animation: float 4s ease-in-out infinite;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); animation: float 4s ease-in-out infinite;
   display: flex; flex-direction: column;
 }
-.hero-floating-card .card-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.8); margin-bottom: 4px; }
-.hero-floating-card .card-value { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: #ffffff; }
-.card-top { top: -20px; right: -30px; }
+.hero-floating-card .card-label { font-size: 0.75rem; color: var(--text-light); margin-bottom: 4px; }
+.hero-floating-card .card-value { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+
+/* Card Top: Pink background, White text */
+.card-top { top: -20px; right: -30px; background: var(--pink); color: #ffffff; border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3); }
+.card-top .card-label { color: rgba(255, 255, 255, 0.8); }
+.card-top .card-value { color: #ffffff; }
+
+/* Card Bottom: White background, Pink accent */
 .card-bottom { bottom: 40px; left: -40px; animation-delay: 1.5s; }
+.card-bottom .card-value { color: var(--pink); }
 
 /* ======================== */
 /* Hero Stats & Trusted Brands */

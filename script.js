@@ -36,8 +36,6 @@ function resolveSiteHref(href) {
   if (/^(https?:|mailto:|tel:)/i.test(href)) return href;
   if (href.startsWith('/')) return normalizeInternalHref(href);
   if (!href.startsWith('#')) return href;
-  if (isHomePage()) return href;
-
   const section = href.slice(1).toLowerCase();
   const routeMap = {
     home: 'index.html#home',
@@ -881,8 +879,13 @@ async function loadNavLinks() {
     const a = document.createElement('a');
     const href = resolveSiteHref(link.href || '#');
     a.href = href;
-    a.textContent = link.label;
-    a.className = link.is_cta ? 'nav-cta' : 'nav-link';
+    if (link.is_cta) {
+      a.className = 'nav-cta';
+      a.innerHTML = `<i data-lucide="send" class="lucide-sm"></i> ` + escapeHtml(link.label);
+    } else {
+      a.className = 'nav-link';
+      a.textContent = link.label;
+    }
     if (isCurrentNavTarget(link.href || href)) {
       a.classList.add('active');
       a.setAttribute('aria-current', 'page');
@@ -1005,10 +1008,27 @@ async function loadBrands() {
   if (!track) return;
   track.innerHTML = '';
   data.forEach(brand => {
-    const el = document.createElement('span');
-    el.className = 'brand-logo';
-    el.textContent = brand.name;
-    track.appendChild(el);
+    if (brand.logo_url) {
+      const img = document.createElement('img');
+      img.src = brand.logo_url;
+      img.alt = brand.name || 'Trusted Brand';
+      img.className = 'brand-logo-img';
+      // Inline style to match height with text roughly while maintaining aspect ratio
+      img.style.height = '40px';
+      img.style.width = 'auto';
+      img.style.objectFit = 'contain';
+      img.style.opacity = '0.7';
+      img.style.transition = 'opacity 0.3s, filter 0.3s';
+      img.style.filter = 'grayscale(100%)';
+      img.onmouseenter = () => { img.style.opacity = '1'; img.style.filter = 'grayscale(0%)'; };
+      img.onmouseleave = () => { img.style.opacity = '0.7'; img.style.filter = 'grayscale(100%)'; };
+      track.appendChild(img);
+    } else {
+      const el = document.createElement('span');
+      el.className = 'brand-logo';
+      el.textContent = brand.name;
+      track.appendChild(el);
+    }
   });
   showSection('trustedBrands');
 }
