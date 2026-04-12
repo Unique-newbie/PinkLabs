@@ -15,7 +15,11 @@ function initSupabase() {
   const url = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_URL : 'YOUR_SUPABASE_URL';
   const key = (typeof PINKLABS_CONFIG !== 'undefined') ? PINKLABS_CONFIG.SUPABASE_ANON_KEY : 'YOUR_SUPABASE_ANON_KEY';
   if (typeof supabase !== 'undefined' && url !== 'YOUR_SUPABASE_URL') {
-    sb = supabase.createClient(url, key);
+    sb = supabase.createClient(url, key, {
+      global: {
+        fetch: (fetchUrl, options) => fetch(fetchUrl, { ...options, cache: 'no-store' })
+      }
+    });
     return true;
   }
   return false;
@@ -220,18 +224,27 @@ function initCookieConsent() {
 // =============================================================
 // Scroll Reveal
 // =============================================================
+let globalScrollObserver = null;
+
 function initScrollReveal() {
-  const els = document.querySelectorAll('.reveal');
-  if (!els.length) return;
-  const observer = new IntersectionObserver((entries) => {
+  if (globalScrollObserver) {
+    globalScrollObserver.disconnect();
+  }
+  globalScrollObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('revealed');
-        observer.unobserve(entry.target);
+        globalScrollObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-  els.forEach(el => observer.observe(el));
+  observeRevealElements();
+}
+
+function observeRevealElements() {
+  if (!globalScrollObserver) return;
+  const els = document.querySelectorAll('.reveal:not(.revealed)');
+  els.forEach(el => globalScrollObserver.observe(el));
 }
 
 // =============================================================
@@ -552,6 +565,7 @@ async function loadAllContent() {
       loadNavLinks(),
       loadHero(),
       loadStats(),
+      loadBrands(),
       loadServices(),
       loadProcess(),
       loadPortfolio(),
@@ -779,7 +793,28 @@ async function loadStats() {
     item.innerHTML = `<span class="stat-number" data-count="${stat.number}">${stat.number}<span class="pink">${stat.suffix || ''}</span></span><span class="stat-label">${stat.label}</span>`;
     grid.appendChild(item);
   });
-  showSection('statsBar');
+  showSection('statsGrid');
+}
+
+// --- Trusted Brands ---
+// DB table: trust_logos | columns: name, sort_order
+async function loadBrands() {
+  const { data } = await sb.from('trust_logos').select('*').order('sort_order');
+  if (!data || !data.length) {
+    const section = document.getElementById('trustedBrands');
+    if (section) section.style.display = 'none';
+    return;
+  }
+  const track = document.querySelector('.brands-track');
+  if (!track) return;
+  track.innerHTML = '';
+  data.forEach(brand => {
+    const el = document.createElement('span');
+    el.className = 'brand-logo';
+    el.textContent = brand.name;
+    track.appendChild(el);
+  });
+  showSection('trustedBrands');
 }
 
 // --- Services ---
@@ -1157,12 +1192,11 @@ function showSection(id) {
   const el = document.getElementById(id);
   if (el) {
     el.style.display = '';
-    // Re-trigger reveal animations for dynamically loaded cards inside this section
-    // Without this, .reveal elements would stay invisible if the section was display:none
+    // Re-bind intersection observer for dynamically loaded cards
     requestAnimationFrame(() => {
-      el.querySelectorAll('.reveal:not(.revealed)').forEach(card => {
-        card.classList.add('revealed');
-      });
+      if (typeof observeRevealElements === 'function') {
+        observeRevealElements();
+      }
     });
   }
 }

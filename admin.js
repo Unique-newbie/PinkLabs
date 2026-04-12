@@ -15,7 +15,11 @@ let currentSection = 'dashboard';
 // =============================================================
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof supabase !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        fetch: (fetchUrl, options) => fetch(fetchUrl, { ...options, cache: 'no-store' })
+      }
+    });
     checkAuth();
   } else {
     console.warn('Supabase not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in admin.js');
@@ -138,7 +142,7 @@ async function loadSection(section) {
   currentSection = section;
   const area = document.getElementById('contentArea');
   const titleMap = {
-    dashboard: 'Dashboard', hero: 'Hero Section', services: 'Services', process: 'Process Steps',
+    dashboard: 'Dashboard', hero: 'Hero Section', brands: 'Trusted Brands', services: 'Services', process: 'Process Steps',
     portfolio: 'Portfolio Projects', testimonials: 'Testimonials', team: 'Team Members',
     about: 'About Section', pricing: 'Pricing Plans', faq: 'FAQ', 'contact-info': 'Contact & Social',
     submissions: 'Submissions', settings: 'Site Settings', navbar: 'Navigation'
@@ -151,6 +155,7 @@ async function loadSection(section) {
     switch (section) {
       case 'dashboard': await renderDashboard(area); break;
       case 'hero': await renderHeroEditor(area); break;
+      case 'brands': await renderCrudList(area, 'trust_logos', ['name', 'sort_order']); break;
       case 'services': await renderCrudList(area, 'services', ['title', 'description', 'icon_svg']); break;
       case 'process': await renderCrudList(area, 'process_steps', ['step_number', 'title', 'description', 'icon_svg']); break;
       case 'portfolio': await renderCrudList(area, 'projects', ['title', 'description', 'tag', 'image_url', 'project_url', 'is_featured']); break;
@@ -276,7 +281,7 @@ async function renderHeroEditor(area) {
     <div class="section-panel">
       <div class="section-panel-header">
         <h3>Stats <span class="hint" style="font-weight:400">(counter bar below the hero — e.g. "100+ Projects")</span></h3>
-        <button class="btn btn-pink btn-sm" onclick="openStatModal()">+ Add Stat</button>
+        <button class="btn btn-pink btn-sm" onclick="openCrudModal('stats', ['number', 'suffix', 'label'], null)">+ Add Stat</button>
       </div>
       <div class="section-panel-body" id="statsContainer">Loading stats...</div>
     </div>
@@ -327,7 +332,7 @@ async function loadStats() {
         <div class="item-sub">${esc(s.label)}</div>
       </div>
       <div class="item-actions">
-        <button class="btn btn-ghost btn-sm" onclick="editStat('${s.id}')">Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="openCrudModal('stats', ['number', 'suffix', 'label'], '${s.id}')">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRow('stats','${s.id}')">Delete</button>
       </div>
     </div>
