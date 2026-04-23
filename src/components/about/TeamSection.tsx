@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Linkedin, Twitter, Github } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 export function TeamSection({ teamMembers }: { teamMembers: any[] }) {
   const [activeMember, setActiveMember] = useState<string | null>(null)

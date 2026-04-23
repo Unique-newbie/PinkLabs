@@ -31,7 +31,7 @@ export async function updateHeroContent(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/hero')
-  return { success: true }
+
 }
 
 /**
@@ -61,7 +61,7 @@ export async function upsertService(formData: FormData) {
   revalidatePath('/')
   revalidatePath('/services')
   revalidatePath('/admin/services')
-  return { success: true }
+
 }
 
 /**
@@ -95,7 +95,7 @@ export async function upsertProject(formData: FormData) {
   revalidatePath('/')
   revalidatePath('/portfolio')
   revalidatePath('/admin/portfolio')
-  return { success: true }
+
 }
 
 /**
@@ -118,7 +118,7 @@ export async function updateBranding(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/settings')
-  return { success: true }
+
 }
 
 /**
@@ -148,7 +148,7 @@ export async function upsertTestimonial(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/testimonials')
-  return { success: true }
+
 }
 
 export async function deleteTestimonial(id: string) {
@@ -157,7 +157,7 @@ export async function deleteTestimonial(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/')
   revalidatePath('/admin/testimonials')
-  return { success: true }
+
 }
 
 /**
@@ -186,7 +186,7 @@ export async function upsertFaq(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/faqs')
-  return { success: true }
+
 }
 
 export async function deleteFaq(id: string) {
@@ -195,7 +195,7 @@ export async function deleteFaq(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/')
   revalidatePath('/admin/faqs')
-  return { success: true }
+
 }
 
 /**
@@ -225,7 +225,7 @@ export async function upsertProcessStep(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/process')
-  return { success: true }
+
 }
 
 export async function deleteProcessStep(id: string) {
@@ -234,7 +234,7 @@ export async function deleteProcessStep(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/')
   revalidatePath('/admin/process')
-  return { success: true }
+
 }
 
 /**
@@ -264,7 +264,7 @@ export async function upsertCompanyValue(formData: FormData) {
   revalidatePath('/')
   revalidatePath('/about')
   revalidatePath('/admin/values')
-  return { success: true }
+
 }
 
 export async function deleteCompanyValue(id: string) {
@@ -274,7 +274,7 @@ export async function deleteCompanyValue(id: string) {
   revalidatePath('/')
   revalidatePath('/about')
   revalidatePath('/admin/values')
-  return { success: true }
+
 }
 
 /**
@@ -304,7 +304,7 @@ export async function upsertBrand(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/brands-stats')
-  return { success: true }
+
 }
 
 export async function deleteBrand(id: string) {
@@ -313,7 +313,7 @@ export async function deleteBrand(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/')
   revalidatePath('/admin/brands-stats')
-  return { success: true }
+
 }
 
 /**
@@ -342,7 +342,7 @@ export async function upsertSiteStat(formData: FormData) {
   
   revalidatePath('/')
   revalidatePath('/admin/brands-stats')
-  return { success: true }
+
 }
 
 export async function deleteSiteStat(id: string) {
@@ -351,7 +351,7 @@ export async function deleteSiteStat(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/')
   revalidatePath('/admin/brands-stats')
-  return { success: true }
+
 }
 
 /**
@@ -367,5 +367,5 @@ export async function updateContactMessageStatus(id: string, status: string) {
   if (error) throw new Error(error.message)
   
   revalidatePath('/admin/leads')
-  return { success: true }
+
 }
