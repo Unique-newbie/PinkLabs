@@ -1,79 +1,36 @@
-# PinkLabs — Web Development Agency
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A production-ready, fully dynamic CMS-powered agency website with dark mode, rich portfolio modals, and a complete admin dashboard.
+## Getting Started
 
-![PinkLabs](https://img.shields.io/badge/PinkLabs-Agency-E91E63?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTIwLjg0IDQuNjFhNS41IDUuNSAwIDAgMC03Ljc4IDBMMTIgNS42N2wtMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAtNy43OCA3Ljc4bDEuMDYgMS4wNkwxMiAyMS4yM2w3Ljc4LTcuNzggMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAgMC03Ljc4eiIvPjwvc3ZnPg==)
+First, run the development server:
 
-## ✨ Features
-
-- **Dynamic CMS** — All content powered by Supabase (hero, services, portfolio, pricing, FAQ, testimonials, team)
-- **Dark Mode** — Persistent theme toggle with system preference detection
-- **Rich Portfolio** — Expandable project cards with tech stacks, live links, GitHub repos, and image galleries
-- **Admin Dashboard** — Full CRUD admin panel at `/admin` with auth
-- **Contact Form** — Lead capture with Supabase integration
-- **Professional SVG Icons** — Zero emojis, all Feather/Lucide-style vector icons
-- **Responsive Design** — Mobile-first, works on all screen sizes
-- **Security Headers** — XSS protection, clickjacking prevention, content-type enforcement
-
-## 🚀 Quick Start
-
-### 1. Clone & Install
 ```bash
-git clone https://github.com/Unique-newbie/PinkLabs.git
-cd PinkLabs
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### 2. Configure Supabase
-1. Create a project at [supabase.com](https://supabase.com)
-2. Run `supabase-schema.sql` in the Supabase SQL Editor
-3. Update `config.js` with your project URL and anon key:
-```js
-const PINKLABS_CONFIG = {
-  SUPABASE_URL: 'https://your-project.supabase.co',
-  SUPABASE_ANON_KEY: 'your-anon-key-here',
-};
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### 3. Create Admin User
-Go to Supabase → Authentication → Add User → Enter email & password
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### 4. Run Locally
-Open `index.html` in a browser, or use a local server:
-```bash
-npx serve .
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📁 Project Structure
+## Learn More
 
-```
-PinkLabs/
-├── index.html          # Main public website
-├── reachout.html        # Contact/reach out page
-├── admin.html           # Admin dashboard (hidden, noindex)
-├── style.css            # All site styles + dark mode
-├── script.js            # Public site logic
-├── admin.js             # Admin panel logic
-├── admin.css            # Admin dashboard styles
-├── config.js            # Supabase credentials (edit this!)
-├── vercel.json          # Vercel deployment config
-├── supabase-schema.sql  # Database schema (16 tables)
-└── images/              # Static images
-```
+To learn more about Next.js, take a look at the following resources:
 
-## 🔧 Configuration
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-All configuration lives in `config.js`. The Supabase anon key is **public by design** — security is enforced through Row Level Security (RLS) policies on the database.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## 🌐 Deployment
+## Deploy on Vercel
 
-Deployed on [Vercel](https://vercel.com). Clean URLs like `/admin` and `/reachout` are configured via `vercel.json`.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 🛡️ Security
-
-- Admin portal is `noindex, nofollow` and not linked from the public site
-- Supabase RLS policies protect all database operations
-- Security headers configured in `vercel.json`
-
-## 📄 License
-
-MIT © PinkLabs
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

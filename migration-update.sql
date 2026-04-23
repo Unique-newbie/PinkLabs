@@ -44,6 +44,11 @@ VALUES ('media', 'media', true, 5242880, ARRAY['image/png','image/jpeg','image/g
 ON CONFLICT (id) DO NOTHING;
 
 -- 7. Storage RLS: Allow public reads and authenticated uploads
+DROP POLICY IF EXISTS "public_read" ON storage.objects;
+DROP POLICY IF EXISTS "auth_upload" ON storage.objects;
+DROP POLICY IF EXISTS "auth_update" ON storage.objects;
+DROP POLICY IF EXISTS "auth_delete" ON storage.objects;
+
 CREATE POLICY "public_read" ON storage.objects FOR SELECT TO anon USING (bucket_id = 'media');
 CREATE POLICY "auth_upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'media');
 CREATE POLICY "auth_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'media');
